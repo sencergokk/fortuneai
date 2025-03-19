@@ -1,0 +1,234 @@
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('Missing environment variable: OPENAI_API_KEY');
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    // Create Supabase server client
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.delete({ name, ...options });
+          },
+        },
+      }
+    );
+
+    // Check user authentication for protected routes
+    const { type, parameters } = await req.json();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Allow horoscope without authentication
+    if (type !== 'horoscope' && !session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // For authenticated routes, check credits
+    if (type !== 'horoscope' && session) {
+      const { data: userData, error: userError } = await supabase
+        .from('user_credits')
+        .select('credits')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (userError || !userData || userData.credits <= 0) {
+        return NextResponse.json(
+          { error: 'Insufficient credits' },
+          { status: 403 }
+        );
+      }
+
+      // Deduct credit for the request
+      if (type !== 'horoscope') {
+        const { error: updateError } = await supabase
+          .from('user_credits')
+          .update({ credits: userData.credits - 1 })
+          .eq('user_id', session.user.id);
+
+        if (updateError) {
+          console.error('Error updating credits:', updateError);
+          return NextResponse.json(
+            { error: 'Failed to update credits' },
+            { status: 500 }
+          );
+        }
+
+        // Log credit usage
+        await supabase.from('credit_usage').insert({
+          user_id: session.user.id,
+          usage_type: type,
+          usage_date: new Date().toISOString(),
+        });
+      }
+    }
+
+    let response;
+
+    switch (type) {
+      case 'horoscope':
+        response = await generateHoroscope(parameters.sign);
+        break;
+      case 'tarot':
+        response = await generateTarotReading(parameters.spread, parameters.question);
+        break;
+      case 'coffee':
+        response = await generateCoffeeReading(
+          parameters.description,
+          parameters.question,
+          parameters.zodiacSign
+        );
+        break;
+      case 'dream':
+        response = await generateDreamInterpretation(parameters.dream);
+        break;
+      default:
+        return NextResponse.json(
+          { error: 'Invalid fortune-telling type' },
+          { status: 400 }
+        );
+    }
+
+    return NextResponse.json({ result: response });
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to process your request' },
+      { status: 500 }
+    );
+  }
+}
+
+async function generateHoroscope(sign: string) {
+  const systemPrompt = `Sen deneyimli bir astrologsun. Günlük burç yorumları yapıyorsun. Yorumların mistik, içgörü dolu ve kişiselleştirilmiş olmalı. Aynı zamanda pozitif ve motive edici olmalı.
+
+ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
+
+  const userPrompt = `${sign} burcu için bugünün günlük burç yorumunu yap. Aşk, kariyer ve kişisel gelişim hakkında içgörüler sun. Yaklaşık 150 kelime olsun.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt
+      },
+      {
+        role: "user",
+        content: userPrompt
+      }
+    ],
+    temperature: 0.7,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+async function generateTarotReading(spread: string, question?: string) {
+  const systemPrompt = `Sen deneyimli bir tarot okuyucusun. Her kartın sembolik anlamlarını derinlemesine biliyorsun. Yorumların içgörü dolu, nüanslı ve ruhani yönlü olmalı. Her kartın anlamını ve kartların birbiriyle olan etkileşimini açıklamalısın.
+
+ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
+
+  const queryContent = question 
+    ? `${spread} düzeni için "${question}" sorusuna yönelik bir tarot okuması yap.`
+    : `${spread} düzeni için genel bir tarot okuması yap.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt
+      },
+      {
+        role: "user",
+        content: queryContent + " Kartların isimlerini, pozisyonlarını, anlamlarını ve genel yorumu içermeli. Mistik ama pratik olmalı."
+      }
+    ],
+    temperature: 0.7,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+async function generateCoffeeReading(description: string, question?: string, zodiacSign?: string) {
+  const systemPrompt = `Sen deneyimli bir falcısın. Türk kahve falı konusunda bilgilisin. Fallarını detaylı ve kişiselleştirilmiş şekilde hazırlarsın.
+
+ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
+
+  let content = "Türk kahve falı yorumu yapacaksın. ";
+  content += `Fincan hakkında şu bilgiler verildi: "${description}". `;
+  
+  if (question) {
+    content += `Kullanıcının sorusu: "${question}". `;
+  }
+  
+  if (zodiacSign) {
+    content += `Kullanıcının burcu: ${zodiacSign}. `;
+  }
+  
+  content += "Kahve fincanını yorumlamak için geleneksel Türk kahve falı tekniklerini kullan. Aşk, kariyer, para ve sağlık konusunda öngörüler sun. Mistik ve anlamlı bir yorum yap ama gerçekçi ol.";
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt
+      },
+      {
+        role: "user",
+        content: content
+      }
+    ],
+    temperature: 0.7,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+async function generateDreamInterpretation(dream: string) {
+  const systemPrompt = `Sen deneyimli bir rüya yorumcususun. Psikolojik, sembolik ve kültürel açıdan rüyaları analiz edebilirsin. Yorumların içgörü dolu ve düşündürücü olmalı.
+
+ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
+
+  const userPrompt = `Şu rüyayı yorumlar mısın: "${dream}". Rüyadaki semboller, karakterler ve olayları analiz et. Rüya sahibinin hayatında neler olabileceğine dair içgörüler sun. Türk kültüründeki rüya yorumlama geleneklerini de göz önünde bulundur.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt
+      },
+      {
+        role: "user",
+        content: userPrompt
+      }
+    ],
+    temperature: 0.7,
+  });
+
+  return completion.choices[0].message.content;
+} 

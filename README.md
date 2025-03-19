@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FortuneAI - AI-Powered Fortune Telling App
+
+FortuneAI is an AI-powered fortune telling application that offers daily horoscope readings, tarot cards, coffee cup readings, and dream interpretations.
+
+## Features
+
+- **Daily Horoscope**: Personalized daily readings for all zodiac signs
+- **Tarot Cards**: AI-interpreted readings in different tarot spreads
+- **Turkish Coffee Cup Reading**: Describe shapes in your cup and get personalized interpretation
+- **Dream Interpretation**: Share your dreams and receive meaningful psychological and symbolic analyses
+- **Membership System**: User accounts and monthly renewable credit system
+
+## Tech Stack
+
+- **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes
+- **Database**: Supabase
+- **AI Integration**: OpenAI GPT-4
+- **Authentication**: Supabase Auth
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+ and npm
+- Supabase account with a project
+- OpenAI API key
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/fortuneai.git
+   cd fortuneai
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Copy the environment variables file and fill in your API keys:
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` and add your Supabase and OpenAI API keys:
+   ```
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+   # OpenAI Configuration
+   OPENAI_API_KEY=your-openai-api-key
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) to see the application
+
+## Supabase Setup
+
+You need to create the following tables in your Supabase project:
+
+### 1. user_credits Table
+```sql
+create table public.user_credits (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  credits integer not null default 15,
+  last_refresh timestamp with time zone default now() not null,
+  created_at timestamp with time zone default now() not null
+);
+
+-- Security policy
+alter table public.user_credits enable row level security;
+create policy "Users can only view their own records"
+  on public.user_credits for select
+  to authenticated
+  using (auth.uid() = user_id);
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. credit_usage Table
+```sql
+create table public.credit_usage (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  usage_type text not null,
+  usage_date timestamp with time zone default now() not null
+);
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+-- Security policy
+alter table public.credit_usage enable row level security;
+create policy "Users can only view their own usage history"
+  on public.credit_usage for select
+  to authenticated
+  using (auth.uid() = user_id);
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+- `src/app`: Next.js App Router pages and API routes
+- `src/components`: UI components, including shadcn/ui components
+- `src/lib`: Utility functions and API clients
+- `src/types`: TypeScript type definitions
+- `src/context`: React context providers
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Acknowledgments
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Supabase](https://supabase.io/)
+- [OpenAI](https://openai.com/)

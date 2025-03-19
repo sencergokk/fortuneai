@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/daily-horoscopes",
+      "schedule": "0 0 * * *"
+    }
+  ]
+} 

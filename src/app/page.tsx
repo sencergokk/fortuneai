@@ -1,103 +1,175 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Sparkles, User, Star, CreditCard, Clock } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { fortuneTypes } from "@/types";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="container py-8 md:py-12 lg:py-16">
+      {/* Hero section */}
+      <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
+        <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl lg:leading-[1.1]">
+          Falomi <span className="text-primary">Fal Dünyası</span>
+        </h1>
+        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+          Geleceğinizi keşfedin, yıldızların sırlarını çözün, tarot kartlarının bilgeliğine kulak verin.
+        </p>
+        <div className="mt-4 flex gap-4">
+          <AuthModal 
+            triggerText="Ücretsiz Kayıt Ol" 
+            defaultTab="sign-up" 
+            triggerVariant="default" 
+            buttonSize="lg"
+          />
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/horoscope">Günlük Burçları Gör</Link>
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* Features section */}
+      <div className="mx-auto mt-16 max-w-[980px]">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold">Neden Falomi?</h2>
+          <p className="text-muted-foreground mt-2">AI teknolojisi ile desteklenen falcılık deneyimi</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto p-2 rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
+                <Star className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>Kişiselleştirilmiş Yorumlar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Astroloji, tarot ve rüya yorumlarınız AI teknolojisi ile size özel hazırlanır.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto p-2 rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>Aylık Ücretsiz Krediler</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Üye olun ve her ay hesabınıza otomatik yüklenen 15 ücretsiz kredi ile falınıza bakın.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardHeader>
+              <div className="mx-auto p-2 rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-2">
+                <Clock className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle>7/24 Erişim</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                İstediğiniz zaman, istediğiniz yerden falınıza bakabilirsiniz. Bekleme yok, sıra yok!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Services section */}
+      <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3 lg:grid-cols-4 mt-16">
+        {Object.entries(fortuneTypes).map(([key, fortune]) => (
+          <Card key={key} className="flex flex-col h-full">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="text-3xl">{fortune.icon}</div>
+                <CardTitle className="text-xl">{fortune.name}</CardTitle>
+              </div>
+              <CardDescription className="mt-2">{fortune.description}</CardDescription>
+            </CardHeader>
+            <CardFooter className="mt-auto pt-4">
+              <Button asChild className="w-full">
+                <Link href={fortune.path} className="flex items-center justify-center gap-1">
+                  Keşfet
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      {/* Testimonials section */}
+      <div className="mx-auto max-w-[980px] mt-16">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold">Kullanıcılarımız Ne Diyor?</h2>
+          <p className="text-muted-foreground mt-2">Binlerce mutlu kullanıcı arasına katılın</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground italic">
+                "FortuneAI sayesinde hayatımdaki değişimlere çok daha hazır hissediyorum. Tarot falı özellikle inanılmaz doğru sonuçlar veriyor!"
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Ayşe K.</p>
+                  <p className="text-xs text-muted-foreground">3 aydır üye</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground italic">
+                "Kahve falı yorumları gerçekten şaşırtıcı derecede isabetli. AI'nın bu kadar iyi yorum yapabilmesi inanılmaz. Aylık krediler de çok iyi düşünülmüş."
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Mehmet Y.</p>
+                  <p className="text-xs text-muted-foreground">6 aydır üye</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* CTA section */}
+      <div className="mx-auto flex max-w-[980px] flex-col items-center gap-6 text-center mt-16 bg-primary/5 p-8 rounded-lg">
+        <div className="flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium">
+          <Sparkles className="h-4 w-4" />
+          <span>Hemen üye olun, 15 kredi hediye!</span>
+        </div>
+        <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-3xl">
+          FortuneAI ile kaderinizi keşfedin
+        </h2>
+        <p className="max-w-[700px] text-muted-foreground">
+          Yapay zeka teknolojisi ile desteklenen fallarımız size özel ve kişiselleştirilmiş yorumlar sunar. 
+          Burçlarınızdan tutun, tarot kartlarına, kahve falından rüya yorumlarına kadar her şey FortuneAI'da.
+        </p>
+        <AuthModal 
+          triggerText="Hemen Ücretsiz Kayıt Ol" 
+          defaultTab="sign-up" 
+          triggerVariant="default" 
+          buttonSize="lg"
+          className="mt-2"
+        />
+      </div>
     </div>
   );
 }
