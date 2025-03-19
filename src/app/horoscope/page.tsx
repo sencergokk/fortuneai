@@ -147,7 +147,7 @@ export default function HoroscopePage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col items-center gap-4 text-center mb-10">
+        <div className="flex flex-col items-center gap-4 text-center mb-2">
           <div className="flex items-center gap-2 bg-muted px-4 py-1 rounded-full text-sm mb-2">
             <Calendar className="h-4 w-4" />
             <span>
@@ -168,11 +168,9 @@ export default function HoroscopePage() {
 
         {/* Daily horoscopes from API - Showing general comments for all users */}
         <div className="mx-auto mb-16 max-w-[1200px]">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold">Günlük Genel Burç Yorumları</h2>
-            <p className="text-muted-foreground mt-2">Bugün yıldızlar senin için ne diyor?</p>
+          <div className="text-center mb-4">
+            <p className="text-muted-foreground">Bugün yıldızlar senin için ne diyor?</p>
           </div>
-          
           <DailyHoroscopes />
         </div>
         

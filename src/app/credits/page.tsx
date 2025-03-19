@@ -24,6 +24,7 @@ const creditPackages = [
       "Tüm Fal Türleri",
       "7 Gün Geçerlilik",
       "Öncelikli Destek",
+      "Özel Fal Seçenekleri",
     ],
     icon: <Zap className="h-8 w-8 text-purple-400" />,
     color: "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/30",
@@ -46,27 +47,25 @@ const creditPackages = [
     icon: <Star className="h-8 w-8 text-amber-400" />,
     color: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/20 dark:to-amber-900/30",
     borderColor: "border-amber-200 dark:border-amber-800",
-    promotion: "40% indirim",
+    promotion: "38% indirim",
   },
   {
     id: "premium",
     name: "Premium",
-    credits: 500,
-    price: 69.99,
+    credits: 400,
+    price: 49.99,
     originalPrice: 99.99,
     features: [
-      "500 Kredi",
+      "400 Kredi",
       "Tüm Fal Türleri",
       "90 Gün Geçerlilik",
-      "VIP Destek",
       "Özel Fal Seçenekleri",
       "Özel Yorumlar",
-      "Sınırsız Fal Geçmişi",
     ],
     icon: <Sparkles className="h-8 w-8 text-blue-400" />,
     color: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30",
     borderColor: "border-blue-200 dark:border-blue-800",
-    promotion: "30% indirim",
+    promotion: "50% indirim",
   },
 ];
 
@@ -352,9 +351,9 @@ export default function CreditsPage() {
                   <div className="text-right">
                     <div className="flex items-center justify-end">
                       <span className="text-sm font-medium line-through text-muted-foreground mr-2">
-                        ${pkg.originalPrice}
+                        {pkg.originalPrice}₺
                       </span>
-                      <span className="text-3xl font-bold">${pkg.price}</span>
+                      <span className="text-3xl font-bold">{pkg.price}₺</span>
                     </div>
                     <Badge variant="outline" className="mt-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                       {calculateSavings(pkg.originalPrice, pkg.price)}% {language === "tr" ? "indirim" : "off"}
