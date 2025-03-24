@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { CookieOptions } from '@supabase/ssr';
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('Missing environment variable: OPENAI_API_KEY');
@@ -23,10 +24,10 @@ export async function POST(req: NextRequest) {
           get(name: string) {
             return cookieStore.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: CookieOptions) {
             cookieStore.set({ name, value, ...options });
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: CookieOptions) {
             cookieStore.delete({ name, ...options });
           },
         },

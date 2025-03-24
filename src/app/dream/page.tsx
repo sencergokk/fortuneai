@@ -14,9 +14,11 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function DreamPage() {
   const [dreamDescription, setDreamDescription] = useState("");
-  const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { useOneCredit } = useAuth();
+  const [interpretation, setInterpretation] = useState<string | null>(null);
+  
+  // Get auth context at component level
+  const auth = useAuth();
 
   const handleDreamChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDreamDescription(e.target.value);
@@ -27,15 +29,17 @@ export default function DreamPage() {
       toast.error("Lütfen rüyanızı anlatın.");
       return;
     }
-
+    
+    setIsLoading(true);
+    
     try {
-      // Use a credit before performing the reading
-      const creditUsed = await useOneCredit();
+      // Call useOneCredit directly from auth
+      const creditUsed = await auth.useOneCredit();
       if (!creditUsed) {
+        setIsLoading(false);
         return;
       }
       
-      setIsLoading(true);
       const result = await getDreamInterpretation(dreamDescription);
       setInterpretation(result);
     } catch (error) {

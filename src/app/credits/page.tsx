@@ -129,7 +129,7 @@ export default function CreditsPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const handlePurchase = async (packageId: string) => {
+  const handlePurchase = async () => {
     if (!user) {
       toast.error(language === "tr" ? "Lütfen önce giriş yapın." : "Please login first.");
       return;
@@ -395,7 +395,7 @@ export default function CreditsPage() {
                 <Button
                   className="w-full text-base py-6"
                   variant={selectedPackage === pkg.id ? "default" : "outline"}
-                  onClick={() => handlePurchase(pkg.id)}
+                  onClick={() => handlePurchase()}
                   size="lg"
                 >
                   {language === "tr" ? "Satın Al" : "Purchase"}

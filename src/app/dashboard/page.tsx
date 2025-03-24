@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard, User, CalendarClock, Clock, History, SparklesIcon } from "lucide-react";
+import { Loader2, CreditCard, User, CalendarClock, Clock, History } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { motion } from "framer-motion";

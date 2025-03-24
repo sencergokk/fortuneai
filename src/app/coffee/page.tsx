@@ -13,21 +13,22 @@ import { toast } from "sonner";
 import { getCoffeeReading } from "@/lib/fortune-api";
 import { ProtectedFeature } from "@/components/auth/ProtectedFeature";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 export default function CoffeePage() {
   const [description, setDescription] = useState("");
   const [question, setQuestion] = useState("");
   const [selectedSign, setSelectedSign] = useState<ZodiacSign | null>(null);
-  const [reading, setReading] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { useOneCredit } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
+  
+  // Get auth context at component level
+  const auth = useAuth();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -49,20 +50,23 @@ export default function CoffeePage() {
       toast.error("Lütfen fincan içindeki şekilleri tanımlayın.");
       return;
     }
-
+    
+    setIsLoading(true);
+    
     try {
-      // Use a credit before performing the reading
-      const creditUsed = await useOneCredit();
+      // Call useOneCredit directly from auth
+      const creditUsed = await auth.useOneCredit();
       if (!creditUsed) {
+        setIsLoading(false);
         return;
       }
       
-      setIsLoading(true);
       const result = await getCoffeeReading(
         description,
         question.trim() || undefined,
         selectedSign || undefined
       );
+      
       setReading(result);
     } catch (error) {
       toast.error("Kahve falı alınırken bir hata oluştu. Lütfen tekrar deneyin.");
@@ -77,7 +81,6 @@ export default function CoffeePage() {
     setQuestion("");
     setSelectedSign(null);
     setReading(null);
-    setImage(null);
     setImagePreview(null);
   };
 
@@ -138,7 +141,7 @@ function CoffeeContent({
   handleDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleQuestionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleGetReading: () => Promise<void>;
+  handleGetReading: () => void;
   setSelectedSign: (sign: ZodiacSign | null) => void;
   resetForm: () => void;
 }) {
@@ -170,11 +173,14 @@ function CoffeeContent({
                         className="cursor-pointer flex items-center justify-center border-2 border-dashed border-muted-foreground/25 p-4 h-32 rounded-md hover:bg-muted transition-colors"
                       >
                         {imagePreview ? (
-                          <img 
-                            src={imagePreview} 
-                            alt="Coffee cup" 
-                            className="h-full w-auto object-contain"
-                          />
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={imagePreview}
+                              alt="Coffee cup"
+                              className="object-contain"
+                              fill={true}
+                            />
+                          </div>
                         ) : (
                           <div className="flex flex-col items-center gap-1 text-muted-foreground">
                             <Upload className="h-8 w-8" />

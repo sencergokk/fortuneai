@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { CookieOptions } from '@supabase/ssr';
+
+// Define interfaces for better type safety
+interface Horoscope {
+  sign: string;
+  sign_tr: string;
+  content: string;
+  date?: string;
+  updated_at?: string;
+}
+
+interface CacheEntry {
+  timestamp: number;
+  data: Horoscope[];
+}
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('Missing environment variable: OPENAI_API_KEY');
@@ -24,15 +39,11 @@ const zodiacSignsTR = [
 ];
 
 // Önbellek değişkeni - sadece sunucu bellektedir, sunucu yeniden başlatıldığında sıfırlanır
-interface CacheEntry {
-  timestamp: number;
-  data: any[];
-}
 let horoscopeCache: CacheEntry | null = null;
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 saat (milisaniye cinsinden)
 
 // GET isteği ile tüm günlük burç yorumlarını alalım
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     console.log('GET /api/daily-horoscopes - Starting request');
     
@@ -45,20 +56,16 @@ export async function GET(req: NextRequest) {
           get(name: string) {
             return cookieStore.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: CookieOptions) {
             cookieStore.set({ name, value, ...options });
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: CookieOptions) {
             cookieStore.delete({ name, ...options });
           },
         },
       }
     );
 
-    // Bugünün tarihini alalım (YYYY-MM-DD formatında)
-    const today = new Date().toISOString().split('T')[0];
-    console.log('Today date:', today);
-    
     // Önbellekte veri var mı kontrol et
     if (horoscopeCache && (Date.now() - horoscopeCache.timestamp) < CACHE_TTL) {
       console.log('Returning cached horoscopes from memory');
@@ -82,8 +89,9 @@ export async function GET(req: NextRequest) {
       if (horoscopes && horoscopes.length === 12) {
         // Bugünün tarihine bakarak ne zaman güncellenmiş olduğunu kontrol et
         const lastUpdateDate = new Date(horoscopes[0].updated_at).toISOString().split('T')[0];
+        const currentDate = new Date().toISOString().split('T')[0];
         
-        if (lastUpdateDate === today) {
+        if (lastUpdateDate === currentDate) {
           console.log('Returning today\'s horoscopes from database');
           // Önbelleğe kaydet
           horoscopeCache = {
@@ -114,7 +122,7 @@ export async function GET(req: NextRequest) {
                 sign: horoscope.sign,
                 sign_tr: horoscope.sign_tr,
                 content: horoscope.content,
-                date: today,
+                date: new Date().toISOString().split('T')[0],
                 updated_at: new Date().toISOString()
               },
               { 
@@ -131,27 +139,17 @@ export async function GET(req: NextRequest) {
         console.log('Successfully updated horoscopes in database');
         
         // Güncellenmiş yorumları alalım
-        const { data: updatedDbHoroscopes, error: fetchError } = await supabase
+        const { data: updatedDbHoroscopes } = await supabase
           .from('daily_horoscopes')
           .select('*')
           .order('sign');
           
-        if (fetchError) {
-          console.error('Error fetching updated horoscopes:', fetchError);
-          // Önbelleğe kaydedelim
-          horoscopeCache = {
-            timestamp: Date.now(),
-            data: updatedHoroscopes
-          };
-          return NextResponse.json({ horoscopes: updatedHoroscopes });
-        }
-        
         // Önbelleğe kaydedelim
         horoscopeCache = {
           timestamp: Date.now(),
-          data: updatedDbHoroscopes
+          data: updatedDbHoroscopes || updatedHoroscopes
         };
-        return NextResponse.json({ horoscopes: updatedDbHoroscopes });
+        return NextResponse.json({ horoscopes: updatedDbHoroscopes || updatedHoroscopes });
         
       } catch (dbError) {
         console.error('Database operation error:', dbError);
@@ -221,10 +219,9 @@ export async function GET(req: NextRequest) {
 }
 
 // Mevcut burç yorumlarını güncelle - yeni yorum oluşturmadan
-async function updateExistingHoroscopes(existingHoroscopes: any[]) {
+async function updateExistingHoroscopes(existingHoroscopes: Horoscope[]): Promise<Horoscope[]> {
   console.log('Updating existing horoscopes without API call');
-  const today = new Date();
-  const updatedHoroscopes = [];
+  const updatedHoroscopes: Horoscope[] = [];
   
   for (const horoscope of existingHoroscopes) {
     // Her horoscopun içeriğini çok az değiştir (tarih güncellemesi gibi)
@@ -263,10 +260,10 @@ export async function POST(req: NextRequest) {
           get(name: string) {
             return cookieStore.get(name)?.value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: CookieOptions) {
             cookieStore.set({ name, value, ...options });
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: CookieOptions) {
             cookieStore.delete({ name, ...options });
           },
         },
@@ -277,7 +274,7 @@ export async function POST(req: NextRequest) {
     console.log('CRON job: Generating horoscopes for updating');
     
     // Önce mevcut burç yorumlarını alalım
-    const { data: existingHoroscopes, error: fetchError } = await supabase
+    const { data: existingHoroscopes } = await supabase
       .from('daily_horoscopes')
       .select('*')
       .order('sign');

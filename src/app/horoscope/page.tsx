@@ -5,12 +5,9 @@ import { zodiacSigns, type ZodiacSign } from "@/types";
 import { getHoroscopeReading } from "@/lib/fortune-api";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { AuthModal } from "@/components/auth/AuthModal";
 import { motion } from "framer-motion";
 import { Calendar, Flame, Leaf, Wind, Droplets } from "lucide-react";
 import { ChevronRight } from "lucide-react";
@@ -67,22 +64,6 @@ export default function HoroscopePage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Generic horoscope data - this would normally come from your database
-  const genericHoroscopes: Record<ZodiacSign, string> = {
-    "aries": "Bugün enerjik ve girişken olacaksınız. Yeni başlangıçlar için uygun bir gün.",
-    "taurus": "Bugün sabırlı ve kararlı davranmanız size avantaj sağlayacak. Finansal konularda dikkatli olun.",
-    "gemini": "İletişim becerileriniz yüksek olacak. Sosyal aktiviteler için uygun bir gün.",
-    "cancer": "Duygusal konularda hassas olabilirsiniz. Ailenizle vakit geçirmek iyi gelecek.",
-    "leo": "Liderlik yönünüz ön plana çıkacak. Yaratıcı projeler için ideal bir gün.",
-    "virgo": "Detaylara olan dikkatiniz sayesinde sorunları kolayca çözebilirsiniz. Sağlığınıza dikkat edin.",
-    "libra": "İlişkilerinizde denge ve uyum ön planda olacak. Estetik konulara ilginiz artabilir.",
-    "scorpio": "Derinlemesine düşünme ve araştırma yapmak için uygun bir gün. Sezgileriniz güçlü.",
-    "sagittarius": "Macera ve özgürlük arayışınız artacak. Yeni öğrenme fırsatları yakalayabilirsiniz.",
-    "capricorn": "Kariyer ve hedefleriniz üzerine yoğunlaşacaksınız. Disiplinli çalışmanız meyvesini verecek.",
-    "aquarius": "Yenilikçi fikirleriniz ön plana çıkacak. Arkadaşlarınızla vakit geçirmek size iyi gelecek.",
-    "pisces": "Hayalleriniz ve sezgileriniz güçlenecek. Sanatsal aktiviteler için uygun bir gün."
   };
 
   // Create a zodiac card component to keep UI consistent

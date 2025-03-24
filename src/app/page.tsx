@@ -116,7 +116,7 @@ export default function Home() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground italic">
-                "FortuneAI sayesinde hayatımdaki değişimlere çok daha hazır hissediyorum. Tarot falı özellikle inanılmaz doğru sonuçlar veriyor!"
+              &quot;FortuneAI sayesinde hayatımdaki değişimlere çok daha hazır hissediyorum. Tarot falı özellikle inanılmaz doğru sonuçlar veriyor!&quot;
               </p>
               <div className="mt-4 flex items-center gap-2">
                 <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center">
@@ -133,7 +133,7 @@ export default function Home() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground italic">
-                "Kahve falı yorumları gerçekten şaşırtıcı derecede isabetli. AI'nın bu kadar iyi yorum yapabilmesi inanılmaz. Aylık krediler de çok iyi düşünülmüş."
+              &quot;Kahve falı yorumları gerçekten şaşırtıcı derecede isabetli. AI&apos;nın bu kadar iyi yorum yapabilmesi inanılmaz. Aylık krediler de çok iyi düşünülmüş.&quot;
               </p>
               <div className="mt-4 flex items-center gap-2">
                 <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center">
@@ -160,7 +160,7 @@ export default function Home() {
         </h2>
         <p className="max-w-[700px] text-muted-foreground">
           Yapay zeka teknolojisi ile desteklenen fallarımız size özel ve kişiselleştirilmiş yorumlar sunar. 
-          Burçlarınızdan tutun, tarot kartlarına, kahve falından rüya yorumlarına kadar her şey FortuneAI'da.
+          Burçlarınızdan tutun, tarot kartlarına, kahve falından rüya yorumlarına kadar her şey FortuneAI&apos;da.
         </p>
         <AuthModal 
           triggerText="Hemen Ücretsiz Kayıt Ol" 

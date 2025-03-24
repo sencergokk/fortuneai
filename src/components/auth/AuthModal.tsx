@@ -43,7 +43,7 @@ export function AuthModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">
-            Falomi'ye Hoş Geldiniz
+            Falomi&apos;ye Hoş Geldiniz
           </DialogTitle>
         </DialogHeader>
         <Tabs defaultValue={defaultTab} className="w-full">

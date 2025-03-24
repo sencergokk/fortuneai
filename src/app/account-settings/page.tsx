@@ -21,7 +21,6 @@ export default function AccountSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -44,7 +43,7 @@ export default function AccountSettings() {
       setNewPassword("");
       setConfirmPassword("");
       toast.success("Şifreniz başarıyla güncellendi");
-    } catch (error) {
+    } catch {
       toast.error("Şifre güncellenirken bir hata oluştu");
     } finally {
       setIsResetting(false);
@@ -55,7 +54,7 @@ export default function AccountSettings() {
     try {
       await signOut();
       toast.success("Başarıyla çıkış yapıldı");
-    } catch (error) {
+    } catch {
       toast.error("Çıkış yapılırken bir hata oluştu");
     }
   };
@@ -235,7 +234,7 @@ export default function AccountSettings() {
                 <CardFooter className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                   <Button 
                     variant="destructive"
-                    onClick={() => setIsDeleteDialogOpen(true)}
+                    onClick={() => toast.error("Bu özellik henüz aktif değildir")}
                   >
                     Hesabımı Kalıcı Olarak Sil
                   </Button>
