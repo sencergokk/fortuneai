@@ -107,19 +107,28 @@ export default function Home() {
               </div>
               
               <div className="relative h-full w-full p-6 flex items-center justify-center">
-                <div className="grid grid-cols-4 gap-3 w-full h-full opacity-90">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full h-full">
                   {Object.entries(fortuneTypes).map(([key, fortune], index) => (
                     <div key={key} className="flex items-center justify-center">
-                      <motion.div 
-                        className="w-full h-full max-w-[120px] max-h-[120px] rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex flex-col items-center justify-center p-3 hover:shadow-xl transition-all"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + (index * 0.1) }}
-                        whileHover={{ y: -5, scale: 1.03 }}
+                      <Link 
+                        href={fortune.path} 
+                        className="w-full flex items-center justify-center"
                       >
-                        <div className="text-4xl mb-2">{fortune.icon}</div>
-                        <p className="text-xs font-medium text-center">{fortune.name}</p>
-                      </motion.div>
+                        <motion.div 
+                          className="w-full max-w-[130px] aspect-square rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex flex-col items-center justify-center p-4 hover:shadow-xl transition-all duration-300 cursor-pointer border border-transparent hover:border-primary/20"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 + (index * 0.1) }}
+                          whileHover={{ 
+                            y: -8, 
+                            boxShadow: "0 15px 30px rgba(125, 125, 125, 0.12)",
+                            transition: { duration: 0.3, ease: "easeOut" }
+                          }}
+                        >
+                          <div className="text-4xl mb-3 transition-transform duration-300 group-hover:scale-110">{fortune.icon}</div>
+                          <p className="text-sm font-medium text-center">{fortune.name}</p>
+                        </motion.div>
+                      </Link>
                     </div>
                   ))}
                 </div>

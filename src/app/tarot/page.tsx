@@ -153,13 +153,14 @@ function TarotContent({
             {Object.entries(tarotSpreads).map(([key, spread], index) => (
               <motion.div
                 key={key}
+                className="h-full flex"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
                 <Card 
                   className={cn(
-                    "cursor-pointer hover:shadow-md transition-all border-2 overflow-hidden relative group",
+                    "cursor-pointer hover:shadow-md transition-all border-2 overflow-hidden relative group w-full flex flex-col",
                     selectedSpread === key 
                       ? `ring-2 ring-primary border-primary` 
                       : "hover:border-primary/50"
@@ -175,7 +176,7 @@ function TarotContent({
                     <Star className="w-24 h-24" />
                   </div>
                   
-                  <CardHeader className="pb-2">
+                  <CardHeader className="pb-2 flex-1 flex flex-col">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={cn(
                         "p-2 rounded-full bg-gradient-to-br text-white flex items-center justify-center shadow-sm",
@@ -185,7 +186,7 @@ function TarotContent({
                       </div>
                       <CardTitle>{spread.name}</CardTitle>
                     </div>
-                    <CardDescription className="mt-1 group-hover:text-primary transition-colors">
+                    <CardDescription className="mt-1 group-hover:text-primary transition-colors flex-grow">
                       {spread.description}
                     </CardDescription>
                   </CardHeader>
