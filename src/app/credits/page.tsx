@@ -18,8 +18,8 @@ const creditPackages = [
     id: "starter",
     name: "Starter",
     credits: 50,
-    price: 9.99,
-    originalPrice: 14.99,
+    price: 19.99,
+    originalPrice: 24.99,
     features: [
       "50 Kredi",
       "Tüm Fal Türleri",
@@ -35,8 +35,8 @@ const creditPackages = [
     id: "popular",
     name: "Popular",
     credits: 150,
-    price: 24.99,
-    originalPrice: 39.99,
+    price: 44.99,
+    originalPrice: 59.99,
     features: [
       "150 Kredi",
       "Tüm Fal Türleri",
@@ -48,14 +48,14 @@ const creditPackages = [
     icon: <Star className="h-8 w-8 text-amber-400" />,
     color: "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/20 dark:to-amber-900/30",
     borderColor: "border-amber-200 dark:border-amber-800",
-    promotion: "38% indirim",
+    promotion: "25% indirim",
   },
   {
     id: "premium",
     name: "Premium",
     credits: 400,
-    price: 49.99,
-    originalPrice: 99.99,
+    price: 89.99,
+    originalPrice: 149.99,
     features: [
       "400 Kredi",
       "Tüm Fal Türleri",
@@ -66,7 +66,7 @@ const creditPackages = [
     icon: <Sparkles className="h-8 w-8 text-blue-400" />,
     color: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/30",
     borderColor: "border-blue-200 dark:border-blue-800",
-    promotion: "50% indirim",
+    promotion: "40% indirim",
   },
 ];
 
