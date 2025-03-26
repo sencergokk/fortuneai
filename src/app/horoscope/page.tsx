@@ -31,13 +31,13 @@ const elementIcons = {
 
 export default function HoroscopePage() {
   const [selectedSign, setSelectedSign] = useState<ZodiacSign | null>(null);
-  const [horoscope, setHoroscope] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const { user, useOneCredit, credits } = useAuth();
+
+  // Store the useOneCredit function reference
+  const useOneCreditFn = useOneCredit;
 
   const handleSignSelect = (sign: ZodiacSign) => {
     setSelectedSign(sign);
-    setHoroscope(null);
   };
 
   const handleGetHoroscope = async () => {
@@ -46,7 +46,7 @@ export default function HoroscopePage() {
     try {
       // Require a credit for personalized reading
       if (user) {
-        const creditUsed = await useOneCredit();
+        const creditUsed = await useOneCreditFn();
         if (!creditUsed) {
           return;
         }
@@ -54,15 +54,9 @@ export default function HoroscopePage() {
         toast.error("Kişisel burç yorumu için giriş yapmanız gerekiyor.");
         return;
       }
-      
-      setIsLoading(true);
-      const result = await getHoroscopeReading(selectedSign);
-      setHoroscope(result);
     } catch (error) {
       toast.error("Burç yorumu alınırken bir hata oluştu. Lütfen tekrar deneyin.");
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

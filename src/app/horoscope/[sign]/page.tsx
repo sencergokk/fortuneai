@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
-import { zodiacSigns, type ZodiacSign, type ZodiacSignDetails } from '@/types';
+import { zodiacSigns, type ZodiacSign } from '@/types';
 import { getHoroscopeReading } from '@/lib/fortune-api';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,12 @@ interface ZodiacPageProps {
   }>;
 }
 
+interface HoroscopeData {
+  sign: string;
+  content: string;
+  updated_at?: string;
+}
+
 export default function ZodiacPage({ params }: ZodiacPageProps) {
   // Fix: Use React.use to unwrap the params Promise
   const unwrappedParams = React.use(params);
@@ -50,11 +56,16 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
   const { user, useOneCredit, credits } = useAuth();
   const [activeTab, setActiveTab] = useState("daily");
 
+  // Store the useOneCredit function reference
+  const useOneCreditFn = useOneCredit;
+
   // Burç bilgisini kontrol et
   const zodiacSign = Object.keys(zodiacSigns).find(key => key === sign);
   if (!zodiacSign) {
     notFound();
   }
+
+  const signDetails = zodiacSigns[zodiacSign as ZodiacSign];
 
   // Set active tab based on login status
   useEffect(() => {
@@ -67,6 +78,11 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
 
   // Fetch general horoscope from API
   useEffect(() => {
+    // Generate a generic horoscope if API fails
+    const generateGenericHoroscope = () => {
+      return `${signDetails.name} burcu için günlük genel yorum. ${signDetails.name} burçları bugün ${signDetails.element === 'Fire' ? 'enerjik ve tutkulu' : signDetails.element === 'Earth' ? 'pratik ve kararlı' : signDetails.element === 'Air' ? 'sosyal ve iletişimci' : 'duygusal ve sezgisel'} olacaklar. Kendinize zaman ayırın ve fırsatları değerlendirin.`;
+    };
+
     const fetchGeneralHoroscope = async () => {
       try {
         setIsGeneralLoading(true);
@@ -77,7 +93,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
         
         const data = await response.json();
         if (data.horoscopes && Array.isArray(data.horoscopes)) {
-          const signHoroscope = data.horoscopes.find((h: any) => h.sign === zodiacSign);
+          const signHoroscope = data.horoscopes.find((h: HoroscopeData) => h.sign === zodiacSign);
           if (signHoroscope) {
             setGeneralHoroscope(signHoroscope.content);
             
@@ -107,14 +123,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
     };
 
     fetchGeneralHoroscope();
-  }, [zodiacSign]);
-
-  const signDetails = zodiacSigns[zodiacSign as ZodiacSign];
-  
-  // Generate a generic horoscope if API fails
-  const generateGenericHoroscope = () => {
-    return `${signDetails.name} burcu için günlük genel yorum. ${signDetails.name} burçları bugün ${signDetails.element === 'Fire' ? 'enerjik ve tutkulu' : signDetails.element === 'Earth' ? 'pratik ve kararlı' : signDetails.element === 'Air' ? 'sosyal ve iletişimci' : 'duygusal ve sezgisel'} olacaklar. Kendinize zaman ayırın ve fırsatları değerlendirin.`;
-  };
+  }, [zodiacSign, signDetails]);
 
   // Burç özellikleri
   const traitsBySign: Record<ZodiacSign, string[]> = {
@@ -153,7 +162,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
 
   const personalityTraits = traitsBySign[zodiacSign as ZodiacSign] || [];
   
-  const getPersonalHoroscope = async () => {
+  const handleGetPersonalHoroscope = async () => {
     if (!user) {
       toast.error("Kişisel burç yorumu için giriş yapmanız gerekiyor.");
       return;
@@ -161,7 +170,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
 
     try {
       // Kredi kullanımı
-      const creditUsed = await useOneCredit();
+      const creditUsed = await useOneCreditFn();
       if (!creditUsed) {
         return;
       }
@@ -408,7 +417,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
                         
                         <Button 
                           className="mt-4"
-                          onClick={getPersonalHoroscope} 
+                          onClick={handleGetPersonalHoroscope} 
                           disabled={isLoading || credits < 1}
                         >
                           {isLoading ? (

@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, router]);
+  }, [supabase, router, refreshUserCredits]);
 
   async function refreshUserCredits(userId: string) {
     try {
