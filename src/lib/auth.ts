@@ -1,11 +1,19 @@
-import { createClientComponentClient } from '@supabase/ssr';
-import { type AuthResponse, type User, type AuthTokenResponse } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { 
+  AuthResponse, 
+  User, 
+  UserResponse,
+} from '@supabase/supabase-js';
 
 export type AuthError = {
   message: string;
 };
 
-const supabase = createClientComponentClient();
+// Create the Supabase browser client
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function signUp(email: string, password: string): Promise<AuthResponse> {
   return supabase.auth.signUp({
@@ -31,7 +39,7 @@ export async function resetPassword(email: string): Promise<{ error: AuthError |
   });
 }
 
-export async function updatePassword(password: string): Promise<AuthTokenResponse> {
+export async function updatePassword(password: string): Promise<UserResponse> {
   return supabase.auth.updateUser({
     password,
   });

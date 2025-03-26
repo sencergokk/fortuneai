@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -34,6 +34,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Wrap refreshUserCredits in useCallback to fix dependency warning
+  const refreshUserCredits = useCallback(async (userId: string) => {
+    // Move initializeUserCredits inside the callback to fix dependencies
+    async function initializeUserCredits(userId: string) {
+      try {
+        const now = new Date().toISOString();
+        const { error } = await supabase
+          .from("user_credits")
+          .insert({ 
+            user_id: userId, 
+            credits: 15,
+            last_refresh: now
+          });
+
+        if (error) {
+          console.error("Error initializing credits:", error);
+          return;
+        }
+
+        setCredits(15);
+        setLastCreditRefresh(now);
+      } catch (error) {
+        console.error("Error in initializeUserCredits:", error);
+      }
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("user_credits")
+        .select("credits, last_refresh")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching credits:", error);
+        return;
+      }
+
+      if (data) {
+        setCredits(data.credits);
+        if (data.last_refresh) {
+          setLastCreditRefresh(data.last_refresh);
+        }
+      } else {
+        // Initialize user credits if not found
+        await initializeUserCredits(userId);
+      }
+    } catch (error) {
+      console.error("Error in refreshUserCredits:", error);
+    }
+  }, [supabase]); // Remove initializeUserCredits from dependencies
+
   useEffect(() => {
     const getSession = async () => {
       const {
@@ -65,56 +117,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, [supabase, router, refreshUserCredits]);
-
-  async function refreshUserCredits(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from("user_credits")
-        .select("credits, last_refresh")
-        .eq("user_id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching credits:", error);
-        return;
-      }
-
-      if (data) {
-        setCredits(data.credits);
-        if (data.last_refresh) {
-          setLastCreditRefresh(data.last_refresh);
-        }
-      } else {
-        // Initialize user credits if not found
-        await initializeUserCredits(userId);
-      }
-    } catch (error) {
-      console.error("Error in refreshUserCredits:", error);
-    }
-  }
-
-  async function initializeUserCredits(userId: string) {
-    try {
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from("user_credits")
-        .insert({ 
-          user_id: userId, 
-          credits: 15,
-          last_refresh: now
-        });
-
-      if (error) {
-        console.error("Error initializing credits:", error);
-        return;
-      }
-
-      setCredits(15);
-      setLastCreditRefresh(now);
-    } catch (error) {
-      console.error("Error in initializeUserCredits:", error);
-    }
-  }
 
   async function signIn(email: string, password: string) {
     try {

@@ -53,11 +53,11 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
   const [generalHoroscope, setGeneralHoroscope] = useState<string | null>(null);
   const [isGeneralLoading, setIsGeneralLoading] = useState(true);
   const [lastUpdateDate, setLastUpdateDate] = useState<string>("");
-  const { user, useOneCredit, credits } = useAuth();
+  const { user, credits } = useAuth();
   const [activeTab, setActiveTab] = useState("daily");
-
-  // Store the useOneCredit function reference
-  const useOneCreditFn = useOneCredit;
+  
+  // Separate auth context access to avoid hook rule violation
+  const auth = useAuth();
 
   // Burç bilgisini kontrol et
   const zodiacSign = Object.keys(zodiacSigns).find(key => key === sign);
@@ -169,8 +169,8 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
     }
 
     try {
-      // Kredi kullanımı
-      const creditUsed = await useOneCreditFn();
+      // Use auth.useOneCredit instead of direct hook call
+      const creditUsed = await auth.useOneCredit();
       if (!creditUsed) {
         return;
       }

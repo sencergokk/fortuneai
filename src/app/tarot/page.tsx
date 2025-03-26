@@ -40,10 +40,7 @@ export default function TarotPage() {
   const [question, setQuestion] = useState("");
   const [reading, setReading] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { useOneCredit } = useAuth();
-
-  // Store the useOneCredit function reference
-  const useOneCreditFn = useOneCredit;
+  const auth = useAuth();
 
   const handleSpreadSelect = (spread: TarotSpread) => {
     setSelectedSpread(spread);
@@ -54,8 +51,7 @@ export default function TarotPage() {
     if (!selectedSpread) return;
 
     try {
-      // Use a credit before performing the reading
-      const creditUsed = await useOneCreditFn();
+      const creditUsed = await auth.useOneCredit();
       if (!creditUsed) {
         return;
       }
