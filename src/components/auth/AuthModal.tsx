@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -15,6 +15,8 @@ interface AuthModalProps {
   buttonSize?: "default" | "sm" | "lg" | "icon";
   className?: string;
   showWhenLoggedIn?: boolean;
+  openModal?: boolean;
+  setOpenModal?: (open: boolean) => void;
 }
 
 export function AuthModal({
@@ -24,9 +26,26 @@ export function AuthModal({
   buttonSize = "default",
   className = "",
   showWhenLoggedIn = false,
+  openModal,
+  setOpenModal,
 }: AuthModalProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const { user } = useAuth();
+
+  // Kullanıcı giriş yaptıysa modal'ı kapat
+  useEffect(() => {
+    if (user && (openModal || internalOpen)) {
+      if (setOpenModal) {
+        setOpenModal(false);
+      } else {
+        setInternalOpen(false);
+      }
+    }
+  }, [user, openModal, internalOpen, setOpenModal]);
+
+  // Controlled veya uncontrolled mod için open state'ini belirle
+  const isOpen = openModal !== undefined ? openModal : internalOpen;
+  const setIsOpen = setOpenModal || setInternalOpen;
 
   // If user is logged in and modal should not be shown when logged in, don't render
   if (user && !showWhenLoggedIn) {
@@ -34,7 +53,7 @@ export function AuthModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant={triggerVariant} size={buttonSize} className={className}>
           {triggerText}

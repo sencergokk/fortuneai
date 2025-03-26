@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  // Gelen isteğin URL'ini al
+  const url = request.nextUrl.clone();
+  
+  // Yanıt nesnesini oluştur
+  const response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,8 +40,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession();
 
   // Check auth condition for protected routes
-  if (!session && isProtectedRoute(request.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (!session && isProtectedRoute(url.pathname)) {
+    // Kullanıcı giriş yapmamış ve korumalı bir sayfa istemiş
+    url.searchParams.set("login", "required");
+    return NextResponse.rewrite(url);
   }
 
   return response;
@@ -55,6 +57,7 @@ function isProtectedRoute(pathname: string): boolean {
     "/dream",
     "/tarot",
     "/coffee",
+    "/credits",
   ];
   
   // Allow public horoscope pages
@@ -74,6 +77,7 @@ export const config = {
     "/dream/:path*",
     "/tarot/:path*",
     "/coffee/:path*",
+    "/credits/:path*",
     "/horoscope/:path*",
   ],
 }; 

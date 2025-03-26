@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -20,6 +20,25 @@ export function ProtectedFeature({
   showAuthModal = true,
 }: ProtectedFeatureProps) {
   const { user, credits, isLoading } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
+  // URL'den login=required parametresini client tarafında al
+  useEffect(() => {
+    // Client tarafında çalışacak URL sorgusu
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const loginRequired = params.get("login") === "required";
+      
+      if (loginRequired && !user && !isLoading) {
+        setIsLoginModalOpen(true);
+        
+        // URL'den login parametresini temizle (tarihi değiştirmeden)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('login');
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [user, isLoading]);
 
   // Loading state
   if (isLoading) {
@@ -69,6 +88,8 @@ export function ProtectedFeature({
             <AuthModal 
               triggerText="Giriş Yap / Kayıt Ol" 
               className="mt-2"
+              openModal={isLoginModalOpen}
+              setOpenModal={setIsLoginModalOpen}
             />
           </CardFooter>
         )}
