@@ -101,13 +101,13 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
           >
-            <div className="relative mx-auto max-w-[90%] aspect-[5/2] rounded-xl overflow-hidden shadow-2xl shadow-primary/20 border border-gray-200 dark:border-gray-800">
+            <div className="relative mx-auto max-w-[95%] xs:max-w-[90%] aspect-auto xs:aspect-[4/3] sm:aspect-[4/3] md:aspect-[5/2] rounded-xl overflow-hidden shadow-2xl shadow-primary/20 border border-gray-200 dark:border-gray-800">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-100/90 to-white/50 dark:from-gray-900/90 dark:to-gray-800/50">
                 <div className="absolute inset-0 backdrop-blur-[2px]" />
               </div>
               
-              <div className="relative h-full w-full p-6 flex items-center justify-center">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full h-full">
+              <div className="relative h-full w-full p-3 xs:p-4 md:p-6 flex items-center justify-center">
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 md:gap-4 w-full">
                   {Object.entries(fortuneTypes).map(([key, fortune], index) => (
                     <div key={key} className="flex items-center justify-center">
                       <Link 
@@ -115,7 +115,7 @@ export default function Home() {
                         className="w-full flex items-center justify-center"
                       >
                         <motion.div 
-                          className="w-full max-w-[130px] aspect-square rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex flex-col items-center justify-center p-4 hover:shadow-xl transition-all duration-300 cursor-pointer border border-transparent hover:border-primary/20"
+                          className="w-full max-w-[90px] xs:max-w-[110px] md:max-w-[130px] aspect-square rounded-2xl bg-white dark:bg-gray-800 shadow-lg flex flex-col items-center justify-center p-2 xs:p-3 md:p-4 hover:shadow-xl transition-all duration-300 cursor-pointer border border-transparent hover:border-primary/20"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 + (index * 0.1) }}
@@ -125,8 +125,8 @@ export default function Home() {
                             transition: { duration: 0.3, ease: "easeOut" }
                           }}
                         >
-                          <div className="text-4xl mb-3 transition-transform duration-300 group-hover:scale-110">{fortune.icon}</div>
-                          <p className="text-sm font-medium text-center">{fortune.name}</p>
+                          <div className="text-2xl xs:text-3xl md:text-4xl mb-1 xs:mb-2 md:mb-3 transition-transform duration-300 group-hover:scale-110">{fortune.icon}</div>
+                          <p className="text-[10px] xs:text-xs md:text-sm font-medium text-center">{fortune.name}</p>
                         </motion.div>
                       </Link>
                     </div>
@@ -215,7 +215,7 @@ export default function Home() {
             <p className="text-muted-foreground mt-3">Sunduğumuz falcılık hizmetleri</p>
           </motion.div>
           
-          <div className="mx-auto grid justify-center gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto grid justify-center gap-4 md:gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
             {Object.entries(fortuneTypes).map(([key, fortune], index) => (
               <motion.div 
                 key={key}
@@ -225,13 +225,13 @@ export default function Home() {
               >
                 <Card className="flex flex-col h-full group overflow-hidden border-2 bg-white dark:bg-gray-950">
                   <CardHeader className="pb-2">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="text-4xl transform group-hover:scale-110 transition-transform duration-300">{fortune.icon}</div>
-                      <CardTitle className="text-xl group-hover:text-primary transition-colors duration-300">{fortune.name}</CardTitle>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1">
+                      <div className="text-3xl md:text-4xl transform group-hover:scale-110 transition-transform duration-300">{fortune.icon}</div>
+                      <CardTitle className="text-base md:text-xl group-hover:text-primary transition-colors duration-300">{fortune.name}</CardTitle>
                     </div>
-                    <CardDescription className="mt-3">{fortune.description}</CardDescription>
+                    <CardDescription className="mt-2 md:mt-3 text-sm md:text-base">{fortune.description}</CardDescription>
                   </CardHeader>
-                  <CardFooter className="mt-auto pt-4">
+                  <CardFooter className="mt-auto pt-3 md:pt-4">
                     <Button 
                       asChild 
                       className="w-full bg-gradient-to-r from-primary/80 to-primary text-white hover:from-primary hover:to-primary/90 transition-all transform group-hover:translate-y-[-2px] duration-300 shadow-lg shadow-primary/20"
