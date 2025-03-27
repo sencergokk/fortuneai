@@ -120,7 +120,7 @@ export default function Home() {
                 <div className="absolute inset-0 backdrop-blur-[2px]" />
                 
                 {/* Dekoratif elementler */}
-                <div className="absolute top-6 left-6 text-3xl text-purple-300/30 dark:text-purple-300/20 animate-pulse">🔮</div>
+
                 <div className="absolute bottom-6 right-6 text-3xl text-pink-300/30 dark:text-pink-300/20 animate-pulse" style={{ animationDelay: "1.5s" }}>✨</div>
                 <div className="absolute top-1/2 left-10 text-2xl text-violet-300/30 dark:text-violet-300/20 animate-pulse" style={{ animationDelay: "0.8s" }}>🌙</div>
                 <div className="absolute bottom-1/3 right-10 text-2xl text-fuchsia-300/30 dark:text-fuchsia-300/20 animate-pulse" style={{ animationDelay: "2.2s" }}>⭐</div>
@@ -430,17 +430,6 @@ export default function Home() {
         >
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-50 to-pink-50 dark:from-violet-950/50 dark:to-pink-950/50 p-8 md:p-10 shadow-2xl border border-pink-200 dark:border-pink-900/30 backdrop-blur-sm">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-fuchsia-400/40 via-violet-500/80 to-fuchsia-400/40" />
-            
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
-              <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
-              
-              {/* Dekoratif elementler */}
-              <div className="absolute top-10 left-10 text-3xl text-pink-300/30 dark:text-pink-300/20 animate-pulse">🔮</div>
-              <div className="absolute bottom-10 right-10 text-3xl text-violet-300/30 dark:text-violet-300/20 animate-pulse" style={{ animationDelay: "1.5s" }}>✨</div>
-              <div className="absolute top-1/3 right-16 text-2xl text-fuchsia-300/30 dark:text-fuchsia-300/20 animate-pulse" style={{ animationDelay: "0.8s" }}>💫</div>
-              <div className="absolute bottom-1/4 left-16 text-2xl text-purple-300/30 dark:text-purple-300/20 animate-pulse" style={{ animationDelay: "2.2s" }}>🌟</div>
-            </div>
             
             <div className="relative z-10 flex flex-col items-center gap-6 text-center">
               <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm px-4 py-2 text-sm font-medium border border-pink-200/50 dark:border-pink-900/30">
