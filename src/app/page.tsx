@@ -311,8 +311,9 @@ export default function Home() {
                       >
                         {fortune.icon}
                       </motion.div>
-                      <CardTitle className="text-base md:text-xl group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors duration-300">{fortune.name}</CardTitle>
+
                     </div>
+                    <CardTitle className="text-base md:text-xl group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors duration-300">{fortune.name}</CardTitle>
                     <CardDescription className="mt-2 md:mt-3 text-sm md:text-base">{fortune.description}</CardDescription>
                   </CardHeader>
                   <CardFooter className="mt-auto pt-3 md:pt-4 relative z-10">
