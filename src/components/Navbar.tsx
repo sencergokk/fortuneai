@@ -50,7 +50,6 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between relative">
         {/* Decorative elements */}
         <div className="absolute top-0 left-10 text-fuchsia-400/10 dark:text-fuchsia-400/5 text-2xl">✨</div>
-        <div className="absolute bottom-0 right-10 text-violet-400/10 dark:text-violet-400/5 text-2xl">🔮</div>
         
         <div className="flex items-center gap-2">
           <Sheet>
