@@ -11,21 +11,21 @@ export const redis = new Redis({
 // Farklı API'ler için farklı rate limitlerini tanımlıyoruz
 export const generalLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5, '10 s'), // 10 saniyede en fazla 5 istek
+  limiter: Ratelimit.slidingWindow(10, '10 s'), // 10 saniyede en fazla 5 istek
   analytics: true, // İsteğe bağlı olarak analitik verilerini etkinleştir
   prefix: 'ratelimit:general',
 });
 
 export const authLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(10, '1 m'), // 1 dakikada en fazla 10 istek
+  limiter: Ratelimit.slidingWindow(20, '1 m'), // 1 dakikada en fazla 10 istek
   analytics: true,
   prefix: 'ratelimit:auth',
 });
 
 export const fortuneLimiter = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'), // 1 dakikada en fazla 5 fal isteği
+  limiter: Ratelimit.slidingWindow(20, '1 m'), // 1 dakikada en fazla 5 fal isteği
   analytics: true,
   prefix: 'ratelimit:fortune',
 });
