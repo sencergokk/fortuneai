@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/daily-horoscopes",
+      "path": "/api/daily-horoscopes?cron=true",
       "schedule": "0 0 * * *"
     }
   ]

@@ -26,7 +26,8 @@ export async function getHoroscopeReading(sign: ZodiacSign): Promise<string> {
 // Tarot reading
 export async function getTarotReading(
   spread: TarotSpread,
-  question?: string
+  question?: string,
+  selectedCards?: string[]
 ): Promise<string> {
   const response = await fetch('/api/openai', {
     method: 'POST',
@@ -38,6 +39,7 @@ export async function getTarotReading(
       parameters: {
         spread,
         question,
+        selectedCards,
       },
     }),
   });

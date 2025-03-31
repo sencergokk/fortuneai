@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // For authenticated routes, check credits
+    // For authenticated routes, check if user has credits
+    // NOT: Krediler artık burada düşülmüyor, sadece yeterli krediniz var mı kontrolü yapılıyor
     if (type !== 'horoscope' && session) {
       const { data: userData, error: userError } = await supabase
         .from('user_credits')
@@ -61,28 +62,8 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Deduct credit for the request
-      if (type !== 'horoscope') {
-        const { error: updateError } = await supabase
-          .from('user_credits')
-          .update({ credits: userData.credits - 1 })
-          .eq('user_id', session.user.id);
-
-        if (updateError) {
-          console.error('Error updating credits:', updateError);
-          return NextResponse.json(
-            { error: 'Failed to update credits' },
-            { status: 500 }
-          );
-        }
-
-        // Log credit usage
-        await supabase.from('credit_usage').insert({
-          user_id: session.user.id,
-          usage_type: type,
-          usage_date: new Date().toISOString(),
-        });
-      }
+      // Kredi düşme kodu kaldırıldı, bu işlem frontend'deki AuthContext tarafından yapılacak
+      // Burada sadece yeterli kredinin olup olmadığı kontrol ediliyor
     }
 
     let response;
@@ -92,7 +73,7 @@ export async function POST(req: NextRequest) {
         response = await generateHoroscope(parameters.sign);
         break;
       case 'tarot':
-        response = await generateTarotReading(parameters.spread, parameters.question);
+        response = await generateTarotReading(parameters.spread, parameters.question, parameters.selectedCards);
         break;
       case 'coffee':
         response = await generateCoffeeReading(
@@ -146,14 +127,21 @@ async function generateHoroscope(sign: string) {
   return completion.choices[0].message.content;
 }
 
-async function generateTarotReading(spread: string, question?: string) {
+async function generateTarotReading(spread: string, question?: string, selectedCards?: string[]) {
   const systemPrompt = `Sen deneyimli bir tarot okuyucusun. Her kartın sembolik anlamlarını derinlemesine biliyorsun. Yorumların içgörü dolu, nüanslı ve ruhani yönlü olmalı. Her kartın anlamını ve kartların birbiriyle olan etkileşimini açıklamalısın.
 
 ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
 
-  const queryContent = question 
+  let queryContent = question 
     ? `${spread} düzeni için "${question}" sorusuna yönelik bir tarot okuması yap.`
     : `${spread} düzeni için genel bir tarot okuması yap.`;
+
+  // Add selected cards to the query if provided
+  if (selectedCards && selectedCards.length > 0) {
+    queryContent += ` Kullanıcının seçtiği kartlar: ${selectedCards.join(', ')}. Kartların isimlerini, pozisyonlarını, anlamlarını ve tam olarak bu kartların yer aldığı bir genel yorum içermeli.`;
+  } else {
+    queryContent += " Kartların isimlerini, pozisyonlarını, anlamlarını ve genel yorumu içermeli.";
+  }
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -164,7 +152,7 @@ async function generateTarotReading(spread: string, question?: string) {
       },
       {
         role: "user",
-        content: queryContent + " Kartların isimlerini, pozisyonlarını, anlamlarını ve genel yorumu içermeli. Mistik ama pratik olmalı."
+        content: queryContent + " Mistik ama pratik olmalı."
       }
     ],
     temperature: 0.7,

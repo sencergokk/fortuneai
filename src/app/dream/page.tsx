@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Moon, Sparkles, Brain, ArrowRight, CloudMoon, Stars } from "lucide-react";
+import { Moon, Sparkles, Brain, ArrowRight, CloudMoon, Stars } from "lucide-react";
 import { toast } from "sonner";
 import { getDreamInterpretation } from "@/lib/fortune-api";
 import { ProtectedFeature } from "@/components/auth/ProtectedFeature";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import { FortuneLoadingAnimation } from "@/components/fortune/FortuneLoadingAnimation";
 
 export default function DreamPage() {
   const [dreamDescription, setDreamDescription] = useState("");
@@ -35,7 +36,7 @@ export default function DreamPage() {
     
     try {
       // Call useOneCredit directly from auth
-      const creditUsed = await auth.useOneCredit();
+      const creditUsed = await auth.useOneCredit('dream');
       if (!creditUsed) {
         setIsLoading(false);
         return;
@@ -110,15 +111,27 @@ function DreamContent({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="input" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rüyanızı Detaylı Anlatın</CardTitle>
-              <CardDescription>
-                Gördüğünüz rüyayı mümkün olduğunca detaylı bir şekilde yazın
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="py-10"
+            >
+              <FortuneLoadingAnimation 
+                type="dream" 
+                message="Rüyanız analiz ediliyor ve semboller yorumlanıyor..."
+              />
+            </motion.div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Rüyanızı Detaylı Anlatın</CardTitle>
+                <CardDescription>
+                  Gördüğünüz rüyayı mümkün olduğunca detaylı bir şekilde yazın
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="grid gap-2">
                   <Label htmlFor="dream">Rüyanız</Label>
                   <Textarea
@@ -129,21 +142,14 @@ function DreamContent({
                     className="min-h-32"
                   />
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button onClick={handleGetInterpretation} disabled={isLoading || !dreamDescription.trim()}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Yorumunuz hazırlanıyor...
-                  </>
-                ) : (
-                  "Rüyamı Yorumla"
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button onClick={handleGetInterpretation} disabled={isLoading || !dreamDescription.trim()}>
+                  Rüyamı Yorumla
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
         </TabsContent>
         <TabsContent value="interpretation" className="mt-4">
           {interpretation && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { getTarotReading } from "@/lib/fortune-api";
 import { TarotSpread } from "@/types";
 import { 
@@ -16,39 +17,74 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Loader2, ArrowRight, Moon, 
+  ArrowRight, Moon, 
   Eye, Sun, Star, 
-  LibraryBig, Hand, Flame, RefreshCw 
+  LibraryBig, Hand, Flame, RefreshCw, Sparkles 
 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedFeature } from "@/components/auth/ProtectedFeature";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { FortuneLoadingAnimation } from "@/components/fortune/FortuneLoadingAnimation";
+
+// Add tarot card data
+const tarotCards = [
+  { id: 1, name: "The Fool", image: "/tarot/fool.jpg" },
+  { id: 2, name: "The Magician", image: "/tarot/magician.jpg" },
+  { id: 3, name: "The High Priestess", image: "/tarot/high-priestess.jpg" },
+  { id: 4, name: "The Empress", image: "/tarot/empress.jpg" },
+  { id: 5, name: "The Emperor", image: "/tarot/emperor.jpg" },
+  { id: 6, name: "The Hierophant", image: "/tarot/hierophant.jpg" },
+  { id: 7, name: "The Lovers", image: "/tarot/lovers.jpg" },
+  { id: 8, name: "The Chariot", image: "/tarot/chariot.jpg" },
+  { id: 9, name: "Strength", image: "/tarot/strength.jpg" },
+  { id: 10, name: "The Hermit", image: "/tarot/hermit.jpg" },
+  { id: 11, name: "Wheel of Fortune", image: "/tarot/wheel-of-fortune.jpg" },
+  { id: 12, name: "Justice", image: "/tarot/justice.jpg" },
+  { id: 13, name: "The Hanged Man", image: "/tarot/hanged-man.jpg" },
+  { id: 14, name: "Death", image: "/tarot/death.jpg" },
+  { id: 15, name: "Temperance", image: "/tarot/temperance.jpg" },
+  { id: 16, name: "The Devil", image: "/tarot/devil.jpg" },
+  { id: 17, name: "The Tower", image: "/tarot/tower.jpg" },
+  { id: 18, name: "The Star", image: "/tarot/star.jpg" },
+  { id: 19, name: "The Moon", image: "/tarot/moon.jpg" },
+  { id: 20, name: "The Sun", image: "/tarot/sun.jpg" },
+  { id: 21, name: "Judgment", image: "/tarot/judgment.jpg" },
+  { id: 22, name: "The World", image: "/tarot/world.jpg" },
+];
 
 const tarotSpreads: Record<TarotSpread, { 
   name: string; 
   description: string; 
   icon: React.ReactNode;
   color: string;
+  credits: number;
+  cardCount: number;
 }> = {
   "single-card": {
     name: "Tek Kart",
     description: "Günlük rehberlik veya basit bir soruya cevap için idealdir",
     icon: <Sun className="h-8 w-8" />,
-    color: "from-amber-300 to-yellow-500 border-amber-200 dark:border-amber-800"
+    color: "from-amber-300 to-yellow-500 border-amber-200 dark:border-amber-800",
+    credits: 1,
+    cardCount: 1
   },
   "three-card": {
     name: "Üç Kart",
     description: "Geçmiş, şimdi ve gelecek veya durum, eylem ve sonuç gibi üçlü bir perspektif sunar",
     icon: <LibraryBig className="h-8 w-8" />,
-    color: "from-emerald-300 to-teal-500 border-emerald-200 dark:border-emerald-800"
+    color: "from-emerald-300 to-teal-500 border-emerald-200 dark:border-emerald-800",
+    credits: 1,
+    cardCount: 3
   },
   "celtic-cross": {
     name: "Kelt Haçı",
     description: "Derinlemesine ve kapsamlı bir okuma için 10 kart kullanılan klasik düzen",
     icon: <Flame className="h-8 w-8" />,
-    color: "from-purple-300 to-violet-500 border-purple-200 dark:border-purple-800"
+    color: "from-purple-300 to-violet-500 border-purple-200 dark:border-purple-800",
+    credits: 3,
+    cardCount: 10
   },
 };
 
@@ -57,24 +93,65 @@ export default function TarotPage() {
   const [question, setQuestion] = useState("");
   const [reading, setReading] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCardSelection, setShowCardSelection] = useState(false);
+  const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const auth = useAuth();
 
   const handleSpreadSelect = (spread: TarotSpread) => {
     setSelectedSpread(spread);
     setReading(null);
+    setShowCardSelection(false);
+    setSelectedCards([]);
+  };
+
+  const handleProceedToCardSelection = () => {
+    if (!selectedSpread) return;
+    setShowCardSelection(true);
+  };
+
+  const handleCardSelect = (cardId: number) => {
+    if (!selectedSpread) return;
+    
+    if (selectedCards.includes(cardId)) {
+      // Deselect card if already selected
+      setSelectedCards(selectedCards.filter(id => id !== cardId));
+    } else {
+      // Check if we can select more cards based on the spread
+      if (selectedCards.length < tarotSpreads[selectedSpread].cardCount) {
+        setSelectedCards([...selectedCards, cardId]);
+      } else {
+        toast.info(`${tarotSpreads[selectedSpread].name} için maksimum ${tarotSpreads[selectedSpread].cardCount} kart seçebilirsiniz.`);
+      }
+    }
   };
 
   const handleGetReading = async () => {
     if (!selectedSpread) return;
+    
+    // Check if user has selected the required number of cards
+    if (selectedCards.length !== tarotSpreads[selectedSpread].cardCount) {
+      toast.error(`Lütfen ${tarotSpreads[selectedSpread].cardCount} kart seçin.`);
+      return;
+    }
 
     try {
-      const creditUsed = await auth.useOneCredit();
+      const creditUsed = await auth.useOneCredit('tarot', selectedSpread);
       if (!creditUsed) {
         return;
       }
       
       setIsLoading(true);
-      const result = await getTarotReading(selectedSpread, question.trim() || undefined);
+      // Include selected cards in the API call
+      const selectedCardNames = selectedCards.map(id => 
+        tarotCards.find(card => card.id === id)?.name || ""
+      );
+      
+      const result = await getTarotReading(
+        selectedSpread, 
+        question.trim() || undefined, 
+        selectedCardNames
+      );
+      
       setReading(result);
     } catch (error) {
       toast.error("Tarot okuması alınırken bir hata oluştu. Lütfen tekrar deneyin.");
@@ -101,15 +178,19 @@ export default function TarotPage() {
 
       <ProtectedFeature
         title="Tarot Falı - Üyelere Özel"
-        description="Tarot falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Her tarot falı 1 kredi kullanır ve kayıtlı kullanıcılara her ay 15 kredi verilir."
+        description="Tarot falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Tek kart ve üç kart falı 1 kredi, Kelt haçı falı 3 kredi kullanır. Kayıtlı kullanıcılara her ay 15 kredi verilir."
       >
         <TarotContent 
           selectedSpread={selectedSpread}
           question={question}
           reading={reading}
           isLoading={isLoading}
+          showCardSelection={showCardSelection}
+          selectedCards={selectedCards}
           handleSpreadSelect={handleSpreadSelect}
           handleQuestionChange={handleQuestionChange}
+          handleProceedToCardSelection={handleProceedToCardSelection}
+          handleCardSelect={handleCardSelect}
           handleGetReading={handleGetReading}
         />
       </ProtectedFeature>
@@ -122,16 +203,24 @@ function TarotContent({
   question,
   reading,
   isLoading,
+  showCardSelection,
+  selectedCards,
   handleSpreadSelect,
   handleQuestionChange,
+  handleProceedToCardSelection,
+  handleCardSelect,
   handleGetReading
 }: {
   selectedSpread: TarotSpread | null;
   question: string;
   reading: string | null;
   isLoading: boolean;
+  showCardSelection: boolean;
+  selectedCards: number[];
   handleSpreadSelect: (spread: TarotSpread) => void;
   handleQuestionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleProceedToCardSelection: () => void;
+  handleCardSelect: (cardId: number) => void;
   handleGetReading: () => Promise<void>;
 }) {
   return (
@@ -144,113 +233,132 @@ function TarotContent({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="select" className="mt-4">
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            {Object.entries(tarotSpreads).map(([key, spread], index) => (
-              <motion.div
-                key={key}
-                className="h-full flex"
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="py-10"
+            >
+              <FortuneLoadingAnimation 
+                type="tarot" 
+                message="Kartlar açılıyor ve size özel tarot okuması hazırlanıyor..."
+              />
+            </motion.div>
+          ) : showCardSelection ? (
+            <CardSelectionView 
+              selectedSpread={selectedSpread}
+              selectedCards={selectedCards}
+              handleCardSelect={handleCardSelect}
+              handleGetReading={handleGetReading}
+            />
+          ) : (
+            <>
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.4 }}
               >
-                <Card 
-                  className={cn(
-                    "cursor-pointer hover:shadow-md transition-all border-2 overflow-hidden relative group w-full flex flex-col",
-                    selectedSpread === key 
-                      ? `ring-2 ring-primary border-primary` 
-                      : "hover:border-primary/50"
-                  )}
-                  onClick={() => handleSpreadSelect(key as TarotSpread)}
-                >
-                  <div className={cn(
-                    "absolute top-0 left-0 h-1 w-full bg-gradient-to-r", 
-                    spread.color
-                  )} />
-                  
-                  <div className="absolute right-0 top-0 opacity-5 rotate-12 translate-x-4 -translate-y-4 transform group-hover:scale-110 transition-transform duration-700">
-                    <Star className="w-24 h-24" />
-                  </div>
-                  
-                  <CardHeader className="pb-2 flex-1 flex flex-col">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={cn(
-                        "p-2 rounded-full bg-gradient-to-br text-white flex items-center justify-center shadow-sm",
-                        spread.color
-                      )}>
-                        {spread.icon}
-                      </div>
-                      <CardTitle>{spread.name}</CardTitle>
-                    </div>
-                    <CardDescription className="mt-1 group-hover:text-primary transition-colors flex-grow">
-                      {spread.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-          
-          {selectedSpread && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card className="mt-8 border-primary/20 shadow-md overflow-hidden">
-                <div className={cn(
-                  "absolute top-0 left-0 h-1 w-full bg-gradient-to-r", 
-                  selectedSpread && tarotSpreads[selectedSpread].color
-                )} />
-                
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-primary" />
-                    Sorununuzu Yazın (İsteğe Bağlı)
-                  </CardTitle>
-                  <CardDescription>
-                    Tarot kartlarına sormak istediğiniz spesifik bir soru yazabilirsiniz
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="question">Sorunuz</Label>
-                      <Input
-                        id="question"
-                        placeholder="Örn: Kariyer değişikliği yapmalı mıyım?"
-                        value={question}
-                        onChange={handleQuestionChange}
-                        className="border-primary/20 focus-visible:ring-primary/30"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-end">
-                  <Button 
-                    onClick={handleGetReading} 
-                    disabled={isLoading}
-                    className="relative overflow-hidden group"
+                {Object.entries(tarotSpreads).map(([key, spread], index) => (
+                  <motion.div
+                    key={key}
+                    className="h-full flex"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Okumanız hazırlanıyor...
-                      </>
-                    ) : (
-                      <>
-                        <span className="relative z-10">Tarot Falımı Göster</span>
+                    <Card 
+                      className={cn(
+                        "cursor-pointer hover:shadow-md transition-all border-2 overflow-hidden relative group w-full flex flex-col",
+                        selectedSpread === key 
+                          ? `ring-2 ring-primary border-primary` 
+                          : "hover:border-primary/50"
+                      )}
+                      onClick={() => handleSpreadSelect(key as TarotSpread)}
+                    >
+                      <div className={cn(
+                        "absolute top-0 left-0 h-1 w-full bg-gradient-to-r", 
+                        spread.color
+                      )} />
+                      
+                      <div className="absolute right-0 top-0 opacity-5 rotate-12 translate-x-4 -translate-y-4 transform group-hover:scale-110 transition-transform duration-700">
+                        <Star className="w-24 h-24" />
+                      </div>
+                      
+                      <div className="absolute top-2 right-2 bg-black/10 dark:bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        <span>{spread.credits} Kredi</span>
+                      </div>
+                      
+                      <CardHeader className="pb-2 flex-1 flex flex-col">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={cn(
+                            "p-2 rounded-full bg-gradient-to-br text-white flex items-center justify-center shadow-sm",
+                            spread.color
+                          )}>
+                            {spread.icon}
+                          </div>
+                          <CardTitle>{spread.name}</CardTitle>
+                        </div>
+                        <CardDescription className="mt-1 group-hover:text-primary transition-colors flex-grow">
+                          {spread.description}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+              
+              {selectedSpread && (
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <Card className="mt-8 border-primary/20 shadow-md overflow-hidden">
+                    <div className={cn(
+                      "absolute top-0 left-0 h-1 w-full bg-gradient-to-r", 
+                      selectedSpread && tarotSpreads[selectedSpread].color
+                    )} />
+                    
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Eye className="h-5 w-5 text-primary" />
+                        Sorununuzu Yazın (İsteğe Bağlı)
+                      </CardTitle>
+                      <CardDescription>
+                        Tarot kartlarına sormak istediğiniz spesifik bir soru yazabilirsiniz
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="question">Sorunuz</Label>
+                          <Input
+                            id="question"
+                            placeholder="Örn: Kariyer değişikliği yapmalı mıyım?"
+                            value={question}
+                            onChange={handleQuestionChange}
+                            className="border-primary/20 focus-visible:ring-primary/30"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                      <Button 
+                        onClick={handleProceedToCardSelection} 
+                        disabled={isLoading}
+                        className="relative overflow-hidden group"
+                      >
+                        <span className="relative z-10">Devam Et</span>
                         <span className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></span>
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              )}
+            </>
           )}
         </TabsContent>
         <TabsContent value="reading" className="mt-4">
@@ -384,5 +492,227 @@ function TarotParagraphs({ content, startDelay }: { content: string, startDelay:
         </motion.p>
       ))}
     </div>
+  );
+}
+
+// Add a new component for card selection
+function CardSelectionView({
+  selectedSpread,
+  selectedCards,
+  handleCardSelect,
+  handleGetReading
+}: {
+  selectedSpread: TarotSpread | null;
+  selectedCards: number[];
+  handleCardSelect: (cardId: number) => void;
+  handleGetReading: () => Promise<void>;
+}) {
+  const requiredCards = selectedSpread ? tarotSpreads[selectedSpread].cardCount : 0;
+  
+  // Karışık kart dizilimi oluşturmak için useState kullanıyoruz
+  const [shuffledCards] = useState(() => {
+    // Kartları kopyalayıp karıştırıyoruz
+    return [...tarotCards].sort(() => Math.random() - 0.5);
+  });
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <Card className="border-primary/20 shadow-md overflow-hidden mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Hand className="h-5 w-5 text-primary" />
+            Tarot Kartlarınızı Seçin
+          </CardTitle>
+          <CardDescription>
+            {selectedSpread && (
+              <>
+                <p className="mb-2">
+                  {tarotSpreads[selectedSpread].name} için {requiredCards} kart seçin. 
+                  <span className="font-semibold ml-2">
+                    {selectedCards.length} / {requiredCards} kart seçildi
+                  </span>
+                </p>
+                {selectedCards.length > 0 && (
+                  <div className="text-xs mt-1 flex flex-wrap gap-1">
+                    <span className="font-medium">Seçilen kartlar:</span>
+                    {selectedCards.map((id) => (
+                      <span key={id} className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-700 dark:text-purple-300">
+                        {tarotCards.find(card => card.id === id)?.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {shuffledCards.map((card) => {
+              const isSelected = selectedCards.includes(card.id);
+              
+              return (
+                <div key={card.id} className="relative">
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <div className="absolute -top-3 -left-3 z-30 bg-purple-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg border-2 border-white">
+                      {selectedCards.indexOf(card.id) + 1}
+                    </div>
+                  )}
+                  
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="cursor-pointer relative h-48 sm:h-56 rounded-lg overflow-hidden border-2 shadow-md"
+                    onClick={() => {
+                      // Karta tıklandığında hafif bir titreşim efekti
+                      if ('vibrate' in navigator) {
+                        navigator.vibrate(30);
+                      }
+                      handleCardSelect(card.id);
+                    }}
+                    style={{ 
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d'
+                    }}
+                    layout
+                  >
+                    <AnimatePresence initial={false} mode="wait">
+                      {isSelected ? (
+                        // Ön yüz (seçilince görünür)
+                        <motion.div
+                          key="front"
+                          initial={{ opacity: 0, rotateY: 90 }}
+                          animate={{ 
+                            opacity: 1, 
+                            rotateY: 0,
+                            transition: { 
+                              type: "spring",
+                              stiffness: 80,
+                              damping: 12,
+                              duration: 0.4 
+                            }
+                          }}
+                          exit={{ 
+                            opacity: 0,
+                            rotateY: -90,
+                            transition: { duration: 0.2 }
+                          }}
+                          className={cn(
+                            "absolute inset-0 rounded-lg overflow-hidden transform-gpu",
+                            "border-2 shadow-md",
+                            "border-primary ring-2 ring-primary"
+                          )}
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            WebkitBackfaceVisibility: 'hidden',
+                          }}
+                        >
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src={card.image}
+                              alt={card.name}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                              className="object-cover"
+                              priority
+                            />
+                            
+                            {/* Card name banner at bottom */}
+                            <div className="absolute bottom-0 inset-x-0 py-1 bg-black/60 backdrop-blur-sm">
+                              <h3 className="text-xs text-center font-medium text-white">
+                                {card.name}
+                              </h3>
+                            </div>
+                            
+                            {/* Selection indicator (sparkle icon) */}
+                            <div className="absolute top-2 right-2 z-20 bg-primary rounded-full p-1 shadow-lg">
+                              <Sparkles className="h-4 w-4 text-white" />
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        // Arka yüz (seçilmeyince görünür)
+                        <motion.div
+                          key="back"
+                          initial={{ opacity: 0 }}
+                          animate={{ 
+                            opacity: 1,
+                            rotateY: 0,
+                            transition: { 
+                              duration: 0.3,
+                              delay: Math.random() * 0.3
+                            }
+                          }}
+                          exit={{
+                            opacity: 0,
+                            rotateY: 90,
+                            transition: { duration: 0.2 }
+                          }}
+                          className={cn(
+                            "absolute inset-0 rounded-lg overflow-hidden transform-gpu",
+                            "border-2 shadow-md bg-purple-100 dark:bg-purple-900/30",
+                            "border-purple-200 dark:border-purple-800/50 hover:border-primary/50"
+                          )}
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            WebkitBackfaceVisibility: 'hidden',
+                          }}
+                        >
+                          <div className="relative h-full w-full">
+                            <Image 
+                              src="/tarot/back.jpg"
+                              alt="Tarot Card Back"
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                              className="object-cover"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              if (selectedCards.length > 0) {
+                // Clear selected cards
+                selectedCards.forEach(id => handleCardSelect(id));
+              }
+            }}
+            className="border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/50"
+            disabled={selectedCards.length === 0}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Seçimi Sıfırla
+          </Button>
+          
+          <Button 
+            onClick={handleGetReading} 
+            disabled={selectedCards.length !== requiredCards}
+            className={cn(
+              "relative overflow-hidden group",
+              selectedCards.length === requiredCards 
+                ? "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white border-0"
+                : ""
+            )}
+          >
+            <span className="relative z-10">Falımı Göster</span>
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 } 

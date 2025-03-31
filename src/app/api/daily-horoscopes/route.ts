@@ -40,12 +40,21 @@ const zodiacSignsTR = [
 
 // Önbellek değişkeni - sadece sunucu bellektedir, sunucu yeniden başlatıldığında sıfırlanır
 let horoscopeCache: CacheEntry | null = null;
-const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 saat (milisaniye cinsinden)
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat (milisaniye cinsinden)
 
-// GET isteği ile tüm günlük burç yorumlarını alalım
-export async function GET() {
+// Otomatik güncelleme için son tarih kaydı
+let lastUpdateDate: string | null = null;
+
+/**
+ * Cron endpoint - Bu endpoint Vercel cron jobs tarafından 24 saatte bir tetiklenecek
+ * Burç yorumlarını otomatik olarak güncelleyecek
+ */
+export async function GET(req: NextRequest) {
   try {
     console.log('GET /api/daily-horoscopes - Starting request');
+    
+    // URL parametresi kontrol et - eğer ?cron=true ise, burç yorumlarını zorla güncelle
+    const isCronRequest = req.nextUrl.searchParams.get('cron') === 'true';
     
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -66,51 +75,37 @@ export async function GET() {
       }
     );
 
-    // Önbellekte veri var mı kontrol et
-    if (horoscopeCache && (Date.now() - horoscopeCache.timestamp) < CACHE_TTL) {
+    // Önbellekte veri var mı kontrol et - cron isteği değilse önbelleği kullan
+    if (!isCronRequest && horoscopeCache && (Date.now() - horoscopeCache.timestamp) < CACHE_TTL) {
       console.log('Returning cached horoscopes from memory');
       return NextResponse.json({ horoscopes: horoscopeCache.data });
     }
 
-    // Supabase'den en son burç yorumlarını alalım
-    try {
-      console.log('Querying Supabase for daily horoscopes');
-      const { data: horoscopes, error } = await supabase
-        .from('daily_horoscopes')
-        .select('*')
-        .order('sign');
+    // Bugünün tarihi
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Cron için veya bugün zaten güncelleme yapılmadıysa güncelleme yapalım
+    if (isCronRequest || lastUpdateDate !== currentDate) {
+      console.log('Updating daily horoscopes due to cron request or new day');
       
-      if (error) {
-        console.error('Supabase query error:', error);
-        // Tablo yoksa veya erişim hatası olabilir - ama devam et, hata fırlatma
-      }
-      
-      // Eğer yeterli sayıda güncel burç yorumu varsa, bunları döndür
-      if (horoscopes && horoscopes.length === 12) {
-        // Bugünün tarihine bakarak ne zaman güncellenmiş olduğunu kontrol et
-        const lastUpdateDate = new Date(horoscopes[0].updated_at).toISOString().split('T')[0];
-        const currentDate = new Date().toISOString().split('T')[0];
+      try {
+        // Mevcut horoscope verilerini çekelim
+        const { data: existingHoroscopes, error } = await supabase
+          .from('daily_horoscopes')
+          .select('*')
+          .order('sign');
         
-        if (lastUpdateDate === currentDate) {
-          console.log('Returning today\'s horoscopes from database');
-          // Önbelleğe kaydet
-          horoscopeCache = {
-            timestamp: Date.now(),
-            data: horoscopes
-          };
-          return NextResponse.json({ horoscopes });
+        if (error) {
+          console.error('Supabase query error:', error);
+          return NextResponse.json(
+            { error: 'Database query failed' },
+            { status: 500 }
+          );
         }
         
-        // Bu noktaya geldiyse, yorumlar güncel değil demektir - güncellememiz gerekiyor
-        console.log('Horoscopes not updated today, updating from database');
-      }
-      
-      // Veritabanındaki yorumları güncelleyelim
-      try {
-        // Tüm burçlar için yorum oluşturmak yerine, önce mevcut yorumları alalım
-        // Sadece içeriği güncelleyelim, böylece API çağrısı yapmaya gerek kalmaz
-        const updatedHoroscopes = horoscopes && horoscopes.length > 0 
-          ? await updateExistingHoroscopes(horoscopes)
+        // Tüm burçlar için yeni yorumlar oluşturalım
+        const updatedHoroscopes = existingHoroscopes && existingHoroscopes.length > 0 
+          ? await updateExistingHoroscopes(existingHoroscopes)
           : await generateAllDailyHoroscopes();
         
         // Her burç için upsert işlemi gerçekleştirelim
@@ -122,7 +117,7 @@ export async function GET() {
                 sign: horoscope.sign,
                 sign_tr: horoscope.sign_tr,
                 content: horoscope.content,
-                date: new Date().toISOString().split('T')[0],
+                date: currentDate,
                 updated_at: new Date().toISOString()
               },
               { 
@@ -136,83 +131,112 @@ export async function GET() {
           }
         }
         
+        // Son güncelleme tarihini ayarla
+        lastUpdateDate = currentDate;
+        
+        // Önbelleği temizle, yeni verilerle doldurulacak
+        horoscopeCache = null;
+        
         console.log('Successfully updated horoscopes in database');
         
-        // Güncellenmiş yorumları alalım
-        const { data: updatedDbHoroscopes } = await supabase
-          .from('daily_horoscopes')
-          .select('*')
-          .order('sign');
-          
-        // Önbelleğe kaydedelim
+        // Eğer cron isteğiyse, başarılı yanıt döndür
+        if (isCronRequest) {
+          return NextResponse.json({ 
+            success: true, 
+            message: 'Daily horoscopes updated successfully',
+            updated: currentDate
+          });
+        }
+      } catch (updateError) {
+        console.error('Error updating horoscopes:', updateError);
+        
+        // Eğer cron isteğiyse, hata yanıtı döndür
+        if (isCronRequest) {
+          return NextResponse.json(
+            { error: 'Failed to update horoscopes' }, 
+            { status: 500 }
+          );
+        }
+        // Normal GET isteği için, devam et ve veritabanındaki verileri döndür
+      }
+    }
+
+    // Supabase'den en son burç yorumlarını alalım
+    try {
+      console.log('Querying Supabase for daily horoscopes');
+      const { data: horoscopes, error } = await supabase
+        .from('daily_horoscopes')
+        .select('*')
+        .order('sign');
+      
+      if (error) {
+        console.error('Supabase query error:', error);
+        return NextResponse.json(
+          { error: 'Database query failed' },
+          { status: 500 }
+        );
+      }
+      
+      // Eğer yeterli sayıda burç yorumu varsa, bunları döndür
+      if (horoscopes && horoscopes.length === 12) {
+        // Önbelleğe kaydet
         horoscopeCache = {
           timestamp: Date.now(),
-          data: updatedDbHoroscopes || updatedHoroscopes
+          data: horoscopes
         };
-        return NextResponse.json({ horoscopes: updatedDbHoroscopes || updatedHoroscopes });
+        return NextResponse.json({ horoscopes });
+      } else {
+        // Yeterli veri yoksa, yeni veriler oluştur
+        const newHoroscopes = await generateAllDailyHoroscopes();
         
-      } catch (dbError) {
-        console.error('Database operation error:', dbError);
-        // Veritabanı hatası olsa bile yorumları döndür
-        if (horoscopes && horoscopes.length === 12) {
-          // Önbelleğe kaydedelim
-          horoscopeCache = {
-            timestamp: Date.now(),
-            data: horoscopes
-          };
-          return NextResponse.json({ horoscopes });
+        // Her burç için upsert işlemi gerçekleştirelim
+        for (const horoscope of newHoroscopes) {
+          await supabase
+            .from('daily_horoscopes')
+            .upsert(
+              { 
+                sign: horoscope.sign,
+                sign_tr: horoscope.sign_tr,
+                content: horoscope.content,
+                date: currentDate,
+                updated_at: new Date().toISOString()
+              },
+              { 
+                onConflict: 'sign',
+                ignoreDuplicates: false
+              }
+            );
         }
         
-        // Yoksa yeni yorumlar oluştur
-        const newHoroscopes = await generateAllDailyHoroscopes();
-        // Önbelleğe kaydedelim
+        // Önbelleğe kaydet
         horoscopeCache = {
           timestamp: Date.now(),
           data: newHoroscopes
         };
+        
         return NextResponse.json({ horoscopes: newHoroscopes });
       }
+    } catch (dbError) {
+      console.error('Database operation error:', dbError);
       
-    } catch (supabaseError) {
-      console.error('Supabase operation failed:', supabaseError);
-      // Supabase hatası durumunda bile yorumları üret ve döndür
+      // Veritabanı hatası durumunda bile yorumları üret ve döndür
+      const newHoroscopes = await generateAllDailyHoroscopes();
       
-      // Önbellekte veri varsa kullan
-      if (horoscopeCache) {
-        console.log('Using cached horoscopes due to Supabase error');
-        return NextResponse.json({ 
-          horoscopes: horoscopeCache.data,
-          message: 'Veritabanına erişilemedi, önbellekten alınan burç yorumları gösteriliyor.'
-        });
-      }
-      
-      // Yoksa yeni yorumlar oluştur
-      const newHoroscopeContents = await generateAllDailyHoroscopes();
-      // Önbelleğe kaydedelim
+      // Önbelleğe kaydet
       horoscopeCache = {
         timestamp: Date.now(),
-        data: newHoroscopeContents
+        data: newHoroscopes
       };
+      
       return NextResponse.json({ 
-        horoscopes: newHoroscopeContents,
+        horoscopes: newHoroscopes,
         message: 'Veritabanına erişilemedi, ancak burç yorumları başarıyla oluşturuldu.'
       });
     }
-    
   } catch (error) {
-    console.error('API error in daily-horoscopes:', error);
-    
-    // Önbellekte veri varsa kullan
-    if (horoscopeCache) {
-      console.log('Using cached horoscopes due to general error');
-      return NextResponse.json({ 
-        horoscopes: horoscopeCache.data,
-        message: 'Bir hata oluştu, önbellekten alınan burç yorumları gösteriliyor.'
-      });
-    }
-    
+    console.error('Unexpected error in daily-horoscopes API:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch daily horoscopes', details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

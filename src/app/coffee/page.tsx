@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { 
-  Loader2, Upload, Coffee, Sparkles, Clock, Heart, Star, ArrowRight, 
+  Upload, Coffee, Sparkles, Clock, Heart, Star, ArrowRight, 
   Coins,  Eye, CircleDot, Activity
 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { FortuneLoadingAnimation } from "@/components/fortune/FortuneLoadingAnimation";
 
 export default function CoffeePage() {
   const [description, setDescription] = useState("");
@@ -60,7 +61,7 @@ export default function CoffeePage() {
     
     try {
       // Call useOneCredit directly from auth
-      const creditUsed = await auth.useOneCredit();
+      const creditUsed = await auth.useOneCredit('coffee');
       if (!creditUsed) {
         setIsLoading(false);
         return;
@@ -160,100 +161,107 @@ function CoffeeContent({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="input" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fincanınızı Tanımlayın</CardTitle>
-              <CardDescription>
-                Kahve fincanınızdaki şekilleri detaylı olarak anlatın veya fotoğraf yükleyin
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="image" className="text-base">Fincan Fotoğrafı (İsteğe Bağlı)</Label>
-                  <div className="flex items-center gap-4">
-                    <div className="grid w-full gap-1.5">
-                      <Label 
-                        htmlFor="image" 
-                        className="cursor-pointer flex items-center justify-center border-2 border-dashed border-muted-foreground/25 p-4 h-32 rounded-md hover:bg-muted transition-colors"
-                      >
-                        {imagePreview ? (
-                          <div className="relative h-full w-full">
-                            <Image 
-                              src={imagePreview}
-                              alt="Coffee cup"
-                              className="object-contain"
-                              fill={true}
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                            <Upload className="h-8 w-8" />
-                            <span>Fotoğraf yüklemek için tıklayın</span>
-                          </div>
-                        )}
-                      </Label>
-                      <Input 
-                        id="image" 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleImageChange}
-                      />
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="py-10"
+            >
+              <FortuneLoadingAnimation 
+                type="coffee" 
+                message="Fincanınızdaki şekiller yorumlanıyor ve kahve falınız hazırlanıyor..."
+              />
+            </motion.div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Fincanınızı Tanımlayın</CardTitle>
+                <CardDescription>
+                  Kahve fincanınızdaki şekilleri detaylı olarak anlatın veya fotoğraf yükleyin
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="image" className="text-base">Fincan Fotoğrafı (İsteğe Bağlı)</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="grid w-full gap-1.5">
+                        <Label 
+                          htmlFor="image" 
+                          className="cursor-pointer flex items-center justify-center border-2 border-dashed border-muted-foreground/25 p-4 h-32 rounded-md hover:bg-muted transition-colors"
+                        >
+                          {imagePreview ? (
+                            <div className="relative h-full w-full">
+                              <Image 
+                                src={imagePreview}
+                                alt="Coffee cup"
+                                className="object-contain"
+                                fill={true}
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                              <Upload className="h-8 w-8" />
+                              <span>Fotoğraf yüklemek için tıklayın</span>
+                            </div>
+                          )}
+                        </Label>
+                        <Input 
+                          id="image" 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleImageChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description" className="text-base">Fincan Tanımı</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Fincanınızda gördüğünüz şekilleri detaylı olarak tanımlayın. Örneğin: 'Fincanın sağ tarafında bir kuş, alt kısmında dağ gibi bir şekil, sol tarafta bir yol görüyorum...'"
+                      value={description}
+                      onChange={handleDescriptionChange}
+                      className="min-h-32"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="question" className="text-base">Sorunuz (İsteğe Bağlı)</Label>
+                    <Input
+                      id="question"
+                      placeholder="Kahve falınızda özellikle cevap arıyorsanız sorunuzu yazın"
+                      value={question}
+                      onChange={handleQuestionChange}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-base">Burcunuz (İsteğe Bağlı)</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                      {Object.entries(zodiacSigns).map(([key, sign]) => (
+                        <Button
+                          key={key}
+                          type="button"
+                          variant={selectedSign === key ? "default" : "outline"}
+                          className="h-auto py-2 justify-start"
+                          onClick={() => setSelectedSign(key as ZodiacSign)}
+                        >
+                          <span className="mr-2">{sign.emoji}</span>
+                          {sign.name}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description" className="text-base">Fincan Tanımı</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Fincanınızda gördüğünüz şekilleri detaylı olarak tanımlayın. Örneğin: 'Fincanın sağ tarafında bir kuş, alt kısmında dağ gibi bir şekil, sol tarafta bir yol görüyorum...'"
-                    value={description}
-                    onChange={handleDescriptionChange}
-                    className="min-h-32"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="question" className="text-base">Sorunuz (İsteğe Bağlı)</Label>
-                  <Input
-                    id="question"
-                    placeholder="Kahve falınızda özellikle cevap arıyorsanız sorunuzu yazın"
-                    value={question}
-                    onChange={handleQuestionChange}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label className="text-base">Burcunuz (İsteğe Bağlı)</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                    {Object.entries(zodiacSigns).map(([key, sign]) => (
-                      <Button
-                        key={key}
-                        type="button"
-                        variant={selectedSign === key ? "default" : "outline"}
-                        className="h-auto py-2 justify-start"
-                        onClick={() => setSelectedSign(key as ZodiacSign)}
-                      >
-                        <span className="mr-2">{sign.emoji}</span>
-                        {sign.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button onClick={handleGetReading} disabled={isLoading || !description.trim()}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Falınız hazırlanıyor...
-                  </>
-                ) : (
-                  "Falımı Göster"
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button onClick={handleGetReading} disabled={isLoading || !description.trim()}>
+                  Falımı Göster
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
         </TabsContent>
         <TabsContent value="reading" className="mt-4">
           {reading && (

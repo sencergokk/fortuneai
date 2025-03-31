@@ -170,7 +170,7 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
 
     try {
       // Use auth.useOneCredit instead of direct hook call
-      const creditUsed = await auth.useOneCredit();
+      const creditUsed = await auth.useOneCredit('horoscope');
       if (!creditUsed) {
         return;
       }
@@ -191,6 +191,62 @@ export default function ZodiacPage({ params }: ZodiacPageProps) {
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.5 }
   };
+
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const fetchGeneralHoroscope = async () => {
+      try {
+        // First check localStorage cache
+        const cachedHoroscope = localStorage.getItem(`horoscope_${zodiacSign}`);
+        const cachedTimestamp = localStorage.getItem(`horoscope_${zodiacSign}_timestamp`);
+        
+        if (cachedHoroscope && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp);
+          const now = Date.now();
+          // Check if cache is still valid (less than 24 hours old)
+          if (now - timestamp < 24 * 60 * 60 * 1000) {
+            console.log('Using cached horoscope');
+            setHoroscope(JSON.parse(cachedHoroscope));
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        const res = await fetch('/api/daily-horoscopes');
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch daily horoscope');
+        }
+        
+        const data = await res.json();
+        
+        if (data.horoscopes && Array.isArray(data.horoscopes)) {
+          const signHoroscope = data.horoscopes.find((h: HoroscopeData) => h.sign === zodiacSign);
+          
+          if (signHoroscope) {
+            setHoroscope(signHoroscope.content);
+            // Cache the result in localStorage
+            localStorage.setItem(`horoscope_${zodiacSign}`, JSON.stringify(signHoroscope.content));
+            localStorage.setItem(`horoscope_${zodiacSign}_timestamp`, Date.now().toString());
+          } else {
+            // Fallback to generated horoscope
+            setHoroscope(`${signDetails.name} burçları için bugün genel bir yorum. Kendinize zaman ayırın ve fırsatları değerlendirin.`);
+          }
+        } else {
+          setHoroscope(`${signDetails.name} burçları için bugün genel bir yorum. Kendinize zaman ayırın ve fırsatları değerlendirin.`);
+        }
+      } catch (error) {
+        console.error('Error fetching horoscope:', error);
+        setHoroscope(`${signDetails.name} burçları için bugün genel bir yorum. Kendinize zaman ayırın ve fırsatları değerlendirin.`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchGeneralHoroscope();
+    
+  }, [isLoading, zodiacSign, signDetails]);
 
   return (
     <div className="container py-8 md:py-12">

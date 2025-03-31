@@ -16,7 +16,7 @@ interface AuthContextProps {
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   refreshCredits: () => Promise<void>;
-  useOneCredit: () => Promise<boolean>;
+  useOneCredit: (readingType?: string, spreadType?: string) => Promise<boolean>;
   redeemCoupon: (couponCode: string) => Promise<boolean>;
   lastCreditRefresh?: string;
 }
@@ -207,18 +207,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function useOneCredit(): Promise<boolean> {
+  async function useOneCredit(readingType?: string, spreadType?: string): Promise<boolean> {
     if (!user) return false;
     
     try {
-      if (credits <= 0) {
-        toast.error("Yeterli krediniz bulunmamaktadır!");
+      // Kaç kredi düşüleceğini belirle
+      let creditAmount = 1; // Varsayılan değer
+      
+      // Eğer tarot falı ve kelt haçı ise 3 kredi düş
+      if (readingType === 'tarot' && spreadType === 'celtic-cross') {
+        creditAmount = 3;
+      }
+      
+      if (credits < creditAmount) {
+        toast.error(`Bu işlem için ${creditAmount} kredi gerekmektedir. Yeterli krediniz bulunmamaktadır!`);
         return false;
       }
 
       const { error } = await supabase
         .from("user_credits")
-        .update({ credits: credits - 1 })
+        .update({ credits: credits - creditAmount })
         .eq("user_id", user.id);
 
       if (error) {
@@ -230,11 +238,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Log credit usage
       await supabase.from("credit_usage").insert({
         user_id: user.id,
-        usage_type: "fortune_reading",
+        usage_type: readingType || "fortune_reading",
+        usage_amount: creditAmount,
         usage_date: new Date().toISOString(),
       });
 
-      setCredits(credits - 1);
+      setCredits(credits - creditAmount);
       return true;
     } catch (error) {
       console.error("Error in useOneCredit:", error);
