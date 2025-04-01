@@ -170,15 +170,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Ensure user is created before proceeding
       if (data && data.user) {
-        // Create credit record for new user
+        // Email doğrulama gerekiyor mu kontrol et
+        if (data.session === null) {
+          // Kredi oluştur
+          await createUserCredits(data.user.id);
+          toast.success("Kaydınız başarıyla oluşturuldu! E-postanıza gönderilen bağlantı ile hesabınızı doğrulayın.", 
+            { duration: 6000 }); // Mesajı biraz daha uzun gösterelim
+          // Email doğrulaması gerekiyorsa, otomatik giriş yapmayalım
+          return;
+        }
+
+        // E-posta doğrulama gerekmiyorsa veya zaten doğrulanmışsa
         await createUserCredits(data.user.id);
         toast.success("Kaydınız başarıyla oluşturuldu! 15 kredi hesabınıza eklendi.");
+        
+        // Auto sign in after sign up (only if no email confirmation needed)
+        await signIn(email, password);
       } else {
         toast.success("Kaydınız başarıyla oluşturuldu!");
       }
-      
-      // Auto sign in after sign up
-      await signIn(email, password);
     } catch (error) {
       console.error("Error signing up:", error);
       toast.error("Kayıt oluşturulurken bir hata oluştu.");
