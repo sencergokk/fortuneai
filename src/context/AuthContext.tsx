@@ -19,6 +19,7 @@ interface AuthContextProps {
   useOneCredit: (readingType?: string, spreadType?: string) => Promise<boolean>;
   redeemCoupon: (couponCode: string) => Promise<boolean>;
   lastCreditRefresh?: string;
+  forceCreateCredits: (amount?: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -34,41 +35,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Wrap refreshUserCredits in useCallback to fix dependency warning
-  const refreshUserCredits = useCallback(async (userId: string) => {
-    // Move initializeUserCredits inside the callback to fix dependencies
-    async function initializeUserCredits(userId: string) {
-      try {
-        const now = new Date().toISOString();
-        const { error } = await supabase
-          .from("user_credits")
-          .insert({ 
-            user_id: userId, 
-            credits: 15,
-            last_refresh: now
-          });
-
-        if (error) {
-          console.error("Error initializing credits:", error);
-          return;
-        }
-
-        setCredits(15);
-        setLastCreditRefresh(now);
-      } catch (error) {
-        console.error("Error in initializeUserCredits:", error);
+  // Create user credits function
+  const createUserCredits = useCallback(async (userId: string, initialAmount: number = 15) => {
+    try {
+      const now = new Date().toISOString();
+      
+      // First check if credits already exist
+      const { data: existingCredits } = await supabase
+        .from("user_credits")
+        .select("credits")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      if (existingCredits) {
+        // Credits already exist, just update state
+        setCredits(existingCredits.credits);
+        return;
       }
-    }
+      
+      // Insert new credits
+      const { error } = await supabase
+        .from("user_credits")
+        .insert({ 
+          user_id: userId, 
+          credits: initialAmount,
+          last_refresh: now
+        });
 
+      if (error) {
+        console.error("Error creating user credits:", error);
+        return;
+      }
+
+      setCredits(initialAmount);
+      setLastCreditRefresh(now);
+    } catch (error) {
+      console.error("Error in createUserCredits:", error);
+    }
+  }, [supabase]);
+
+  // Wrap refreshUserCredits in useCallback
+  const refreshUserCredits = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from("user_credits")
-        .select("credits, last_refresh")
+        .select("*")
         .eq("user_id", userId)
         .single();
 
-      if (error) {
-        console.error("Error fetching credits:", error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching user credits:", error);
         return;
       }
 
@@ -79,12 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         // Initialize user credits if not found
-        await initializeUserCredits(userId);
+        await createUserCredits(userId);
       }
     } catch (error) {
       console.error("Error in refreshUserCredits:", error);
+      // Create credits on error as a fallback
+      await createUserCredits(userId);
     }
-  }, [supabase]); // Remove initializeUserCredits from dependencies
+  }, [supabase, createUserCredits]);
 
   useEffect(() => {
     const getSession = async () => {
@@ -140,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string) {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -150,12 +168,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      toast.success("Kaydınız başarıyla oluşturuldu!");
+      // Ensure user is created before proceeding
+      if (data && data.user) {
+        // Create credit record for new user
+        await createUserCredits(data.user.id);
+        toast.success("Kaydınız başarıyla oluşturuldu! 15 kredi hesabınıza eklendi.");
+      } else {
+        toast.success("Kaydınız başarıyla oluşturuldu!");
+      }
+      
       // Auto sign in after sign up
       await signIn(email, password);
     } catch (error) {
       console.error("Error signing up:", error);
       toast.error("Kayıt oluşturulurken bir hata oluştu.");
+    }
+  }
+
+  // Force create user credits (for fixing issues or admin use)
+  async function forceCreateCredits(amount: number = 15) {
+    if (!user) {
+      toast.error("Bu işlem için giriş yapmalısınız.");
+      return;
+    }
+    
+    try {
+      await createUserCredits(user.id, amount);
+      toast.success(`${amount} kredi hesabınıza eklendi.`);
+    } catch (error) {
+      console.error("Error forcing credit creation:", error);
+      toast.error("Kredi ekleme işlemi başarısız oldu.");
     }
   }
 
@@ -211,6 +253,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false;
     
     try {
+      // Refresh credits first to ensure we have the latest count
+      await refreshUserCredits(user.id);
+      
       // Kaç kredi düşüleceğini belirle
       let creditAmount = 1; // Varsayılan değer
       
@@ -224,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
+      // Update credits in database first
       const { error } = await supabase
         .from("user_credits")
         .update({ credits: credits - creditAmount })
@@ -236,13 +282,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Log credit usage
-      await supabase.from("credit_usage").insert({
-        user_id: user.id,
-        usage_type: readingType || "fortune_reading",
-        usage_amount: creditAmount,
-        usage_date: new Date().toISOString(),
-      });
+      try {
+        await supabase.from("credit_usage").insert({
+          user_id: user.id,
+          usage_type: readingType || "fortune_reading",
+          usage_amount: creditAmount,
+          usage_date: new Date().toISOString(),
+        });
+      } catch (error: unknown) {
+        // Log but don't fail if usage logging fails
+        console.error("Error logging credit usage:", error);
+      }
 
+      // Update local state after successful database update
       setCredits(credits - creditAmount);
       return true;
     } catch (error) {
@@ -287,7 +339,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Get current credits
+      // Get current credits - first make sure the user has a credit record
+      await refreshUserCredits(user.id);
+      
+      // Get latest credits after refresh
       const { data: userData, error: userError } = await supabase
         .from("user_credits")
         .select("credits")
@@ -361,6 +416,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         useOneCredit,
         redeemCoupon,
         lastCreditRefresh,
+        forceCreateCredits,
       }}
     >
       {children}

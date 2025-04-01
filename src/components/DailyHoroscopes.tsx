@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -71,7 +70,6 @@ export default function DailyHoroscopes() {
   const [horoscopes, setHoroscopes] = useState<Horoscope[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
   // Günlük burç yorumlarını getir
@@ -201,79 +199,43 @@ export default function DailyHoroscopes() {
     );
   }
   
-  // İçeriği özet veya tam olarak göster, veri varsa
+  // İçeriği özet olarak göster, veri varsa
   return (
     <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="mx-auto">
-          <TabsTrigger value="overview">Özet Görünüm</TabsTrigger>
-          <TabsTrigger value="detailed">Detaylı Görünüm</TabsTrigger>
-        </TabsList>
-        
-        {lastUpdated && (
-          <div className="text-center mt-2 text-sm text-muted-foreground">
-            Son güncelleme: {lastUpdated}
-          </div>
-        )}
-        
-        <TabsContent value="overview" className="mt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {horoscopes.map((horoscope) => (
-              <Card key={horoscope.sign} className="flex flex-col h-full">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="text-3xl">{zodiacIcons[horoscope.sign as keyof typeof zodiacIcons] || '⭐'}</div>
-                    <CardTitle className="text-xl">{zodiacNamesTR[horoscope.sign as keyof typeof zodiacNamesTR] || horoscope.sign_tr || horoscope.sign}</CardTitle>
-                  </div>
-                  <CardDescription>{getZodiacDate(horoscope.sign) || 'Tarih bilgisi alınamadı'}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <p className="line-clamp-4 text-sm text-muted-foreground">
-                    {horoscope.content || 'Burç yorumu alınamadı.'}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href={`/horoscope/${horoscope.sign}`}>
-                      Devamını Oku
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="detailed" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {horoscopes.map((horoscope) => (
-              <Card key={horoscope.sign} className="flex flex-col h-full">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="text-3xl">{zodiacIcons[horoscope.sign as keyof typeof zodiacIcons] || '⭐'}</div>
-                    <CardTitle className="text-xl">{zodiacNamesTR[horoscope.sign as keyof typeof zodiacNamesTR] || horoscope.sign_tr || horoscope.sign}</CardTitle>
-                  </div>
-                  <CardDescription>{getZodiacDate(horoscope.sign) || 'Tarih bilgisi alınamadı'}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <p className="text-sm text-muted-foreground">
-                    {horoscope.content || 'Burç yorumu alınamadı.'}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <Button asChild className="w-full">
-                    <Link href={`/horoscope/${horoscope.sign}`}>
-                      Tam Sayfada Gör
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      <h2 className="text-2xl font-bold text-center mb-6">Günlük Burç Yorumları</h2>
+      
+      {lastUpdated && (
+        <div className="text-center mb-6 text-sm text-muted-foreground">
+          Son güncelleme: {lastUpdated}
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {horoscopes.map((horoscope) => (
+          <Card key={horoscope.sign} className="flex flex-col h-full">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="text-3xl">{zodiacIcons[horoscope.sign as keyof typeof zodiacIcons] || '⭐'}</div>
+                <CardTitle className="text-xl">{zodiacNamesTR[horoscope.sign as keyof typeof zodiacNamesTR] || horoscope.sign_tr || horoscope.sign}</CardTitle>
+              </div>
+              <CardDescription>{getZodiacDate(horoscope.sign) || 'Tarih bilgisi alınamadı'}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <p className="line-clamp-4 text-sm text-muted-foreground">
+                {horoscope.content || 'Burç yorumu alınamadı.'}
+              </p>
+            </CardContent>
+            <CardFooter className="pt-4">
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/horoscope/${horoscope.sign}`}>
+                  Devamını Oku
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 } 

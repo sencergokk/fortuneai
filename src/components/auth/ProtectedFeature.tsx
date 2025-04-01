@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 
 interface ProtectedFeatureProps {
   children: ReactNode;
@@ -19,8 +19,29 @@ export function ProtectedFeature({
   description = "Bu özelliği kullanmak için giriş yapmanız gerekmektedir.",
   showAuthModal = true,
 }: ProtectedFeatureProps) {
-  const { user, credits, isLoading } = useAuth();
+  const { user, credits, isLoading, refreshCredits } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isCreditsLoading, setIsCreditsLoading] = useState(true);
+  
+  // Try to load credits on component mount for logged in users
+  useEffect(() => {
+    const loadCredits = async () => {
+      if (user) {
+        setIsCreditsLoading(true);
+        try {
+          await refreshCredits();
+        } catch (error) {
+          console.error("Error refreshing credits:", error);
+        } finally {
+          setIsCreditsLoading(false);
+        }
+      } else {
+        setIsCreditsLoading(false);
+      }
+    };
+    
+    loadCredits();
+  }, [user, refreshCredits]);
   
   // URL'den login=required parametresini client tarafında al
   useEffect(() => {
@@ -40,9 +61,24 @@ export function ProtectedFeature({
     }
   }, [user, isLoading]);
 
-  // Loading state
+  // Loading state for initial auth loading
   if (isLoading) {
-    return <div>Yükleniyor...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+        <p>Yükleniyor...</p>
+      </div>
+    );
+  }
+
+  // Loading state for credits refresh
+  if (user && isCreditsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+        <p>Kredi bilgileri yükleniyor...</p>
+      </div>
+    );
   }
 
   // User is logged in but has no credits

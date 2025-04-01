@@ -75,40 +75,69 @@ export default function CreditsPage() {
   const [selectedPackage, setSelectedPackage] = useState<string | null>("popular");
   const { user, credits, redeemCoupon } = useAuth();
   const [countdown, setCountdown] = useState({ hours: 5, minutes: 59, seconds: 59 });
-  const [hasVisited, setHasVisited] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [isSubmittingCoupon, setIsSubmittingCoupon] = useState(false);
 
   useEffect(() => {
-    // Show confetti on first component mount
-    if (!hasVisited) {
-      const end = Date.now() + 2 * 1000;
-      const colors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee'];
+    // Konfeti animasyonunu başlat - Hızlandırılmış versiyon
+    const duration = 1 * 1000; // 1 saniye sürecek (eskiden 2 saniyeydi)
+    const endTime = Date.now() + duration;
+    const colors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee'];
+    
+    // Animasyon için bir referans tutalım
+    let animationFrame: number;
+    
+    // İlk patlamayı hemen yapalım
+    confetti({
+      particleCount: 15, // Daha fazla parçacık
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: colors
+    });
+    
+    confetti({
+      particleCount: 15, // Daha fazla parçacık
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: colors
+    });
+    
+    // Frame fonksiyonu
+    const frame = () => {
+      confetti({
+        particleCount: 10, // Daha fazla parçacık
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
       
-      (function frame() {
-        confetti({
-          particleCount: 7,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors
-        });
-        confetti({
-          particleCount: 7,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors
-        });
+      confetti({
+        particleCount: 10, // Daha fazla parçacık
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
       
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      }());
-      
-      setHasVisited(true);
-    }
-  }, [hasVisited]);
+      if (Date.now() < endTime) {
+        animationFrame = requestAnimationFrame(frame);
+      }
+    };
+    
+    // Animasyonu başlat
+    animationFrame = requestAnimationFrame(frame);
+    
+    // Temizleme fonksiyonu
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      confetti.reset();
+    };
+  }, []); // Her render'da çalışacak
 
   // Countdown timer
   useEffect(() => {
@@ -136,12 +165,33 @@ export default function CreditsPage() {
       return;
     }
 
-    // Play confetti animation
+    // Daha zengin konfeti animasyonu
+    // Ana patlama
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
+      particleCount: 150, // Daha fazla parçacık
+      spread: 100, // Daha geniş yayılım
+      origin: { y: 0.6 },
+      colors: ['#FFD700', '#FF8C00', '#FF5733', '#C70039', '#900C3F', '#581845']
     });
+    
+    // Yan patlamalar
+    setTimeout(() => {
+      confetti({
+        particleCount: 80,
+        angle: 60,
+        spread: 70,
+        origin: { x: 0 },
+        colors: ['#26c6da', '#00b0ff', '#29b6f6', '#0091ea']
+      });
+      
+      confetti({
+        particleCount: 80,
+        angle: 120,
+        spread: 70,
+        origin: { x: 1 },
+        colors: ['#f06292', '#ec407a', '#e91e63', '#d81b60']
+      });
+    }, 200); // Daha kısa gecikme (500ms yerine 200ms)
 
     // TODO: Implement payment integration
     toast.success(
