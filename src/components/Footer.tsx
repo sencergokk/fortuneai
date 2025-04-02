@@ -245,13 +245,13 @@ export function Footer() {
           </p>
           <div className="flex gap-4">
             <Link
-              href="#"
+              href="/investors"
               className="text-xs text-muted-foreground hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors"
             >
               Yatırımcı İlişkileri
             </Link>
             <Link
-              href="#"
+              href="/careers"
               className="text-xs text-muted-foreground hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors"
             >
               Kariyer Fırsatları
