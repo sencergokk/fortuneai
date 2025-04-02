@@ -95,7 +95,7 @@ export default function Home() {
                 defaultTab="sign-up" 
                 triggerVariant="default" 
                 buttonSize="lg"
-                className="relative shadow-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 transition-all duration-300"
+                className="relative shadow-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 transition-all duration-300 cursor-pointer"
               />
             </motion.div>
             
@@ -103,8 +103,8 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Button variant="outline" size="lg" asChild className="border-2 border-pink-200 dark:border-pink-900/50 hover:bg-pink-50/80 dark:hover:bg-pink-950/20 transition-all duration-300">
-                <Link href="/horoscope">Günlük Burçları Gör</Link>
+              <Button variant="outline" size="lg" asChild className="border-2 border-pink-200 dark:border-pink-900/50 hover:bg-pink-50/80 dark:hover:bg-pink-950/20 transition-all duration-300 cursor-pointer">
+                <Link href="/horoscope" className="cursor-pointer">Günlük Burçları Gör</Link>
               </Button>
             </motion.div>
           </div>
@@ -134,94 +134,9 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Features section */}
+        {/* Hizmetlerimiz section - Yerini değiştirdim, şimdi üstte */}
         <motion.div 
           className="mx-auto max-w-[980px]"
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          <motion.div 
-            className="text-center mb-12"
-            variants={fadeIn}
-          >
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 border border-violet-200 dark:border-violet-900/30 px-4 py-1.5 text-sm font-medium mb-4">
-              <Star className="h-4 w-4 text-violet-500" />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-fuchsia-600">Neden biz?</span>
-            </div>
-            
-            <h2 className="text-3xl font-bold">Neden <span className="text-gradient bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 to-violet-600">Falomi</span>?</h2>
-            <p className="text-muted-foreground mt-3">AI teknolojisi ile desteklenen falcılık deneyimi</p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Star className="h-6 w-6 text-white" />,
-                title: "Kişiselleştirilmiş Yorumlar",
-                description: "Astroloji, tarot ve rüya yorumlarınız AI teknolojisi ile size özel hazırlanır.",
-                color: featureColors[0],
-                emoji: "✨"
-              },
-              {
-                icon: <CreditCard className="h-6 w-6 text-white" />,
-                title: "Aylık Ücretsiz Krediler",
-                description: "Üye olun ve her ay hesabınıza otomatik yüklenen 15 ücretsiz kredi ile falınıza bakın.",
-                color: featureColors[1],
-                emoji: "💎"
-              },
-              {
-                icon: <Clock className="h-6 w-6 text-white" />,
-                title: "7/24 Erişim",
-                description: "İstediğiniz zaman, istediğiniz yerden falınıza bakabilirsiniz. Bekleme yok, sıra yok!",
-                color: featureColors[2],
-                emoji: "🌙"
-              }
-            ].map((feature, index) => (
-              <motion.div key={index} variants={fadeIn}>
-                <Card className="border overflow-hidden group bg-white/80 dark:bg-gray-950/80 transition-all duration-300 h-full backdrop-blur-sm">
-                  <CardHeader>
-                    <div className="relative">
-                      <div className={cn("absolute inset-0 opacity-0  transition-opacity duration-500 bg-gradient-to-br", feature.color)} />
-                      <div className="mx-auto p-3 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-3 relative transition-all duration-300 z-10">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br opacity-0 transition-opacity duration-300" />
-                        <div className="relative z-10 text-primary transition-colors duration-300">
-                          {feature.icon}
-                        </div>
-                      </div>
-                      
-                      <motion.div 
-                        className="absolute -top-1 -right-1 text-xl opacity-40 dark:opacity-30"
-                        animate={{ 
-                          y: [0, -5, 0],
-                          opacity: [0.4, 0.8, 0.4]
-                        }}
-                        transition={{ 
-                          duration: 3,
-                          repeat: Infinity,
-                          delay: index * 0.8
-                        }}
-                      >
-                        {feature.emoji}
-                      </motion.div>
-                    </div>
-                    <CardTitle className="text-center group-hover:text-primary transition-colors duration-300">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-center">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Services section */}
-        <motion.div 
-          className="mx-auto mt-24 max-w-[980px]"
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
@@ -270,9 +185,9 @@ export default function Home() {
                   <CardFooter className="mt-auto pt-3 md:pt-4 relative z-10">
                     <Button 
                       asChild 
-                      className="w-full bg-gradient-to-r from-fuchsia-500 to-violet-600 text-white hover:from-fuchsia-600 hover:to-violet-700 transition-all transform group-hover:translate-y-[-2px] duration-300 shadow-lg shadow-violet-500/20"
+                      className="w-full bg-gradient-to-r from-fuchsia-500 to-violet-600 text-white hover:from-fuchsia-600 hover:to-violet-700 transition-all transform group-hover:translate-y-[-2px] duration-300 shadow-lg shadow-violet-500/20 cursor-pointer"
                     >
-                      <Link href={fortune.path} className="flex items-center justify-center gap-1">
+                      <Link href={fortune.path} className="flex items-center justify-center gap-1 cursor-pointer">
                         Keşfet
                         <motion.div
                           animate={{ x: [0, 5, 0] }}
@@ -283,6 +198,91 @@ export default function Home() {
                       </Link>
                     </Button>
                   </CardFooter>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Features section - Neden Biz - Yerini değiştirdim, şimdi altta */}
+        <motion.div 
+          className="mx-auto mt-24 max-w-[980px]"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+        >
+          <motion.div 
+            className="text-center mb-12"
+            variants={fadeIn}
+          >
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 border border-violet-200 dark:border-violet-900/30 px-4 py-1.5 text-sm font-medium mb-4">
+              <Star className="h-4 w-4 text-violet-500" />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-fuchsia-600">Neden biz?</span>
+            </div>
+            
+            <h2 className="text-3xl font-bold">Neden <span className="text-gradient bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 to-violet-600">Falomi</span>?</h2>
+            <p className="text-muted-foreground mt-3">AI teknolojisi ile desteklenen falcılık deneyimi</p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Star className="h-6 w-6 text-white" />,
+                title: "Kişiselleştirilmiş Yorumlar",
+                description: "Astroloji, tarot ve rüya yorumlarınız AI teknolojisi ile size özel hazırlanır.",
+                color: featureColors[0],
+                emoji: "✨"
+              },
+              {
+                icon: <CreditCard className="h-6 w-6 text-white" />,
+                title: "Aylık Ücretsiz Krediler",
+                description: "Üye olun ve her ay hesabınıza otomatik yüklenen 15 ücretsiz kredi ile falınıza bakın.",
+                color: featureColors[1],
+                emoji: "💎"
+              },
+              {
+                icon: <Clock className="h-6 w-6 text-white" />,
+                title: "7/24 Erişim",
+                description: "İstediğiniz zaman, istediğiniz yerden falınıza bakabilirsiniz. Bekleme yok, sıra yok!",
+                color: featureColors[2],
+                emoji: "🌙"
+              }
+            ].map((feature, index) => (
+              <motion.div key={index} variants={fadeIn}>
+                <Card className="border overflow-hidden group bg-white/80 dark:bg-gray-950/80 transition-all duration-300 h-full backdrop-blur-sm cursor-pointer">
+                  <CardHeader>
+                    <div className="relative">
+                      <div className={cn("absolute inset-0 opacity-0  transition-opacity duration-500 bg-gradient-to-br", feature.color)} />
+                      <div className="mx-auto p-3 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-3 relative transition-all duration-300 z-10">
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br opacity-0 transition-opacity duration-300" />
+                        <div className="relative z-10 text-primary transition-colors duration-300">
+                          {feature.icon}
+                        </div>
+                      </div>
+                      
+                      <motion.div 
+                        className="absolute -top-1 -right-1 text-xl opacity-40 dark:opacity-30"
+                        animate={{ 
+                          y: [0, -5, 0],
+                          opacity: [0.4, 0.8, 0.4]
+                        }}
+                        transition={{ 
+                          duration: 3,
+                          repeat: Infinity,
+                          delay: index * 0.8
+                        }}
+                      >
+                        {feature.emoji}
+                      </motion.div>
+                    </div>
+                    <CardTitle className="text-center group-hover:text-primary transition-colors duration-300">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground text-center">
+                      {feature.description}
+                    </p>
+                  </CardContent>
                 </Card>
               </motion.div>
             ))}
@@ -406,7 +406,7 @@ export default function Home() {
                   defaultTab="sign-up" 
                   triggerVariant="default" 
                   buttonSize="lg"
-                  className="mt-4 relative bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 shadow-xl shadow-violet-500/20"
+                  className="mt-4 relative bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 shadow-xl shadow-violet-500/20 cursor-pointer"
                 />
               </motion.div>
               

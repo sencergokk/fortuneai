@@ -77,7 +77,7 @@ export function AuthModal({
                 Henüz hesabınız yok mu?{" "}
                 <button
                   type="button"
-                  className="underline text-primary"
+                  className="underline text-primary cursor-pointer"
                   onClick={() => document.querySelector('button[value="sign-up"]')?.dispatchEvent(new Event('click'))}
                 >
                   Kayıt olun
@@ -92,7 +92,7 @@ export function AuthModal({
                 Zaten bir hesabınız var mı?{" "}
                 <button
                   type="button"
-                  className="underline text-primary"
+                  className="underline text-primary cursor-pointer"
                   onClick={() => document.querySelector('button[value="sign-in"]')?.dispatchEvent(new Event('click'))}
                 >
                   Giriş yapın
