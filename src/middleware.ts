@@ -8,11 +8,6 @@ export async function middleware(request: NextRequest) {
   // Gelen isteğin URL'ini al
   const url = request.nextUrl.clone();
   
-  // API istekleri için rate limiting'i devre dışı bırakıyoruz
-  // if (url.pathname.startsWith('/api/')) {
-  //   return rateLimitMiddleware(request);
-  // }
-  
   // Yanıt nesnesini oluştur
   const response = NextResponse.next();
   

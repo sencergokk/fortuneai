@@ -54,7 +54,7 @@ export default function Home() {
       <FloatingElements />
       <GlowingEffect />
       
-      <div className="container py-12 md:py-16 lg:py-20 relative z-10">
+      <div className="container py-12 md:py-12 lg:py-12 relative z-10">
         {/* Hero section */}
         <motion.div 
           className="mx-auto flex max-w-[980px] flex-col items-center gap-6 text-center"
@@ -115,77 +115,28 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
           >
-            <div className="relative mx-auto max-w-[95%] xs:max-w-[90%] aspect-auto xs:aspect-[4/3] sm:aspect-[4/3] md:aspect-[5/2] rounded-xl overflow-hidden shadow-2xl shadow-purple-500/20 border border-pink-200 dark:border-pink-900/30">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-50/90 to-pink-50/50 dark:from-purple-950/90 dark:to-pink-950/50">
-                <div className="absolute inset-0 backdrop-blur-[2px]" />
+            <div className="relative mx-auto max-w-[95%] xs:max-w-[90%] overflow-hidden">
+              {/* Background with gentle gradient and floating elements */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-fuchsia-50/30 to-violet-50/30 dark:from-gray-950/80 dark:via-fuchsia-950/30 dark:to-violet-950/30 overflow-hidden">
+                {/* Decorative elements */}
+                <div className="absolute inset-0 backdrop-blur-[1px]"></div>
+                <div className="absolute top-0 left-1/3 w-64 h-64 bg-pink-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+                <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-violet-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-3000"></div>
                 
-                {/* Dekoratif elementler */}
-
-                <div className="absolute bottom-6 right-6 text-3xl text-pink-300/30 dark:text-pink-300/20 animate-pulse" style={{ animationDelay: "1.5s" }}>✨</div>
-                <div className="absolute top-1/2 left-10 text-2xl text-violet-300/30 dark:text-violet-300/20 animate-pulse" style={{ animationDelay: "0.8s" }}>🌙</div>
-                <div className="absolute bottom-1/3 right-10 text-2xl text-fuchsia-300/30 dark:text-fuchsia-300/20 animate-pulse" style={{ animationDelay: "2.2s" }}>⭐</div>
-              </div>
-              
-              <div className="relative h-full w-full p-3 xs:p-4 md:p-6 flex items-center justify-center">
-                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 md:gap-4 w-full">
-                  {Object.entries(fortuneTypes).map(([key, fortune], index) => (
-                    <div key={key} className="flex items-center justify-center">
-                      <Link 
-                        href={fortune.path} 
-                        className="w-full flex items-center justify-center"
-                      >
-                        <motion.div 
-                          className="w-full max-w-[90px] xs:max-w-[110px] md:max-w-[130px] aspect-square rounded-2xl bg-white/90 dark:bg-gray-800/90 shadow-lg shadow-purple-500/10 flex flex-col items-center justify-center p-2 xs:p-3 md:p-4 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 cursor-pointer border border-transparent hover:border-pink-300/50 dark:hover:border-pink-500/30 relative group overflow-hidden"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + (index * 0.1) }}
-                          whileHover={{ 
-                            y: -8, 
-                            boxShadow: "0 15px 30px rgba(168, 85, 247, 0.2)",
-                            transition: { duration: 0.3, ease: "easeOut" }
-                          }}
-                        >
-                          {/* Glow effect on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-400/10 via-transparent to-violet-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                          
-                          <motion.div 
-                            className="text-2xl xs:text-3xl md:text-4xl mb-1 xs:mb-2 md:mb-3 text-violet-500 dark:text-violet-400 transition-all duration-300 relative z-10"
-                            whileHover={{ 
-                              rotate: [0, -10, 10, -5, 5, 0],
-                              scale: 1.1,
-                              transition: { duration: 0.6 } 
-                            }}
-                          >
-                            {fortune.icon}
-                          </motion.div>
-                          <p className="text-[10px] xs:text-xs md:text-sm font-medium text-center relative z-10">{fortune.name}</p>
-                          
-                          {/* Sparkle decoration on hover */}
-                          <motion.div 
-                            className="absolute top-0 right-0 text-sm opacity-0 group-hover:opacity-100 text-pink-300"
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            whileHover={{ 
-                              opacity: 1, 
-                              scale: 1,
-                              rotate: [0, 15, -15, 0],
-                            }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            ✨
-                          </motion.div>
-                        </motion.div>
-                      </Link>
-                    </div>
-                  ))}
+                {/* Light rays */}
+                <div className="absolute inset-0 opacity-40">
+                  <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-pink-500/50 via-transparent to-transparent transform rotate-[20deg]"></div>
+                  <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-fuchsia-500/30 via-transparent to-transparent transform -rotate-[15deg]"></div>
+                  <div className="absolute top-0 right-1/4 w-px h-full bg-gradient-to-b from-violet-500/40 via-transparent to-transparent transform rotate-[25deg]"></div>
                 </div>
-              </div>
+            </div>   
             </div>
           </motion.div>
         </motion.div>
 
         {/* Features section */}
         <motion.div 
-          className="mx-auto mt-24 max-w-[980px]"
+          className="mx-auto max-w-[980px]"
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
@@ -229,13 +180,13 @@ export default function Home() {
               }
             ].map((feature, index) => (
               <motion.div key={index} variants={fadeIn}>
-                <Card className="border overflow-hidden group bg-white/80 dark:bg-gray-950/80 hover:border-pink-300/50 dark:hover:border-pink-700/50 transition-all duration-300 h-full backdrop-blur-sm">
+                <Card className="border overflow-hidden group bg-white/80 dark:bg-gray-950/80 transition-all duration-300 h-full backdrop-blur-sm">
                   <CardHeader>
                     <div className="relative">
-                      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br", feature.color)} />
-                      <div className="mx-auto p-3 rounded-full bg-primary/10 group-hover:bg-transparent w-14 h-14 flex items-center justify-center mb-3 relative transition-all duration-300 z-10">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="relative z-10 text-primary group-hover:text-white transition-colors duration-300">
+                      <div className={cn("absolute inset-0 opacity-0  transition-opacity duration-500 bg-gradient-to-br", feature.color)} />
+                      <div className="mx-auto p-3 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-3 relative transition-all duration-300 z-10">
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br opacity-0 transition-opacity duration-300" />
+                        <div className="relative z-10 text-primary transition-colors duration-300">
                           {feature.icon}
                         </div>
                       </div>

@@ -167,8 +167,6 @@ export default function DailyHoroscopes() {
   // İçeriği özet olarak göster, veri varsa
   return (
     <div>
-      <h2 className="text-2xl font-bold text-center mb-6">Günlük Burç Yorumları</h2>
-      
       {lastUpdated && (
         <div className="text-center mb-6 text-sm text-muted-foreground">
           Son güncelleme: {lastUpdated}
