@@ -12,6 +12,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+export const runtime = 'edge';
+
 export async function POST(req: NextRequest) {
   try {
     // Create Supabase server client
@@ -135,12 +137,12 @@ async function generateTarotReading(spread: string, question?: string, selectedC
 FORMATLAMA: Cevabın düz metin olmalı. Markdown formatı kullanma (** işaretleri, # başlıklar, vs kullanma). Paragraflar arasında boşluk bırak ve yeni satır (\n) kullan. Başlıkları kalın yapmak yerine sadece düz metin olarak yaz. Örneğin "Tek Kart Okuması: 'Soru' için The Tower Kartı" şeklinde normal yazı kullan.`;
 
   let queryContent = question 
-    ? `${spread} düzeni için "${question}" sorusuna yönelik bir tarot okuması yap.`
-    : `${spread} düzeni için genel bir tarot okuması yap.`;
+    ? `${spread} düzeni için "${question}" sorusuna yönelik gerçekçi bir tarot okuması yap.`
+    : `${spread} düzeni için genel ve gerçekçi bir tarot okuması yap.`;
 
   // Add selected cards to the query if provided
   if (selectedCards && selectedCards.length > 0) {
-    queryContent += ` Kullanıcının seçtiği kartlar: ${selectedCards.join(', ')}. Kartların isimlerini, pozisyonlarını, anlamlarını ve tam olarak bu kartların yer aldığı bir genel yorum içermeli.`;
+    queryContent += ` Kullanıcının seçtiği kartlar: ${selectedCards.join(', ')}. Kartların isimlerini, pozisyonlarını, anlamlarını ve tam olarak bu kartların yer aldığı bir genel yorum içermeli. Gerçekçi olarak yorumla.`;
   } else {
     queryContent += " Kartların isimlerini, pozisyonlarını, anlamlarını ve genel yorumu içermeli.";
   }
@@ -157,7 +159,7 @@ FORMATLAMA: Cevabın düz metin olmalı. Markdown formatı kullanma (** işaretl
         content: queryContent + " Mistik ama pratik olmalı. Markdown formatı (**) kullanma ve başlıkları sadece düz metin olarak yaz."
       }
     ],
-    temperature: 0.7,
+    temperature: 0.4,
   });
 
   return completion.choices[0].message.content;
