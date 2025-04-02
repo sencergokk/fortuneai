@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight } from 'lucide-react';
+import useSWR from 'swr';
 
 // Zodyak işaretleri ve simgeleri
 const zodiacIcons = {
@@ -66,86 +67,50 @@ type Horoscope = {
   updated_at: string;
 };
 
+// API'den veri çekme fonksiyonu - SWR için
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Burç yorumları yüklenemedi');
+  }
+  const data = await response.json();
+  return data;
+};
+
+interface HoroscopeApiResponse {
+  horoscopes: Horoscope[];
+  error?: string;
+}
+
 export default function DailyHoroscopes() {
-  const [horoscopes, setHoroscopes] = useState<Horoscope[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
-  // Günlük burç yorumlarını getir
-  useEffect(() => {
-    const fetchHoroscopes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('Fetching horoscopes from API...');
-        
-        const response = await fetch('/api/daily-horoscopes');
-        console.log('API Response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API error details:', errorText);
-          throw new Error(`Failed to fetch horoscopes: ${response.status} ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Received data:', data);
-        
-        if (data.horoscopes && Array.isArray(data.horoscopes) && data.horoscopes.length > 0) {
-          console.log('Setting horoscopes data:', data.horoscopes.length, 'items');
-          setHoroscopes(data.horoscopes);
-          
-          // Son güncelleme tarihini ayarla
-          if (data.horoscopes[0].updated_at) {
-            const updateDate = new Date(data.horoscopes[0].updated_at);
-            setLastUpdated(updateDate.toLocaleDateString('tr-TR', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            }));
-          }
-        } else if (data.error) {
-          console.error('API returned error:', data.error);
-          setError(data.error);
-        } else {
-          console.error('No horoscopes data in response');
-          setError('Burç yorumları yüklenemedi. Lütfen daha sonra tekrar deneyin.');
-        }
-      } catch (error) {
-        console.error('Error fetching horoscopes:', error);
-        setError('Burç yorumları yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
-      } finally {
-        setLoading(false);
+  // SWR ile veri çekme - performans için önbellek ve yeniden doğrulama özelliği
+  const { data, error, isLoading, mutate } = useSWR<HoroscopeApiResponse>('/api/daily-horoscopes', fetcher, {
+    revalidateOnFocus: false,
+    revalidateIfStale: false,
+    dedupingInterval: 3600000, // 1 saat
+    onSuccess: (data: HoroscopeApiResponse) => {
+      if (data?.horoscopes?.[0]?.updated_at) {
+        const updateDate = new Date(data.horoscopes[0].updated_at);
+        setLastUpdated(updateDate.toLocaleDateString('tr-TR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }));
       }
-    };
-    
-    fetchHoroscopes();
-  }, []);
+    }
+  });
+  
+  const horoscopes = data?.horoscopes || [];
   
   // Manuel yeniden deneme için
   const handleManualRetry = () => {
-    setLoading(true);
-    // Burç yorumlarını tekrar yükle
-    fetch('/api/daily-horoscopes')
-      .then(response => response.json())
-      .then(data => {
-        if (data.horoscopes) {
-          setHoroscopes(data.horoscopes);
-          setError(null);
-        }
-      })
-      .catch(error => {
-        console.error('Error retrying fetch:', error);
-        setError('Yenileme başarısız. Lütfen daha sonra tekrar deneyin.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    mutate(); // SWR ile veriyi yeniden yükle
   };
   
   // Yükleme durumu gösterge (Skeleton)
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -178,7 +143,7 @@ export default function DailyHoroscopes() {
     return (
       <div className="p-6 text-center">
         <div className="mb-4 text-red-500">
-          <p>{error}</p>
+          <p>{error.message || 'Burç yorumları yüklenemedi'}</p>
         </div>
         <Button onClick={handleManualRetry} variant="outline">
           Tekrar Dene
@@ -211,7 +176,7 @@ export default function DailyHoroscopes() {
       )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {horoscopes.map((horoscope) => (
+        {horoscopes.map((horoscope: Horoscope) => (
           <Card key={horoscope.sign} className="flex flex-col h-full">
             <CardHeader>
               <div className="flex items-center gap-2">
