@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getTarotReading } from "@/lib/fortune-api";
 import { TarotSpread } from "@/types";
@@ -92,56 +92,65 @@ export default function TarotPage() {
   const [selectedSpread, setSelectedSpread] = useState<TarotSpread | null>(null);
   const [question, setQuestion] = useState("");
   const [reading, setReading] = useState<string | null>(null);
+  const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showCardSelection, setShowCardSelection] = useState(false);
-  const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState("select");
   const auth = useAuth();
 
   const handleSpreadSelect = (spread: TarotSpread) => {
     setSelectedSpread(spread);
-    setReading(null);
-    setShowCardSelection(false);
     setSelectedCards([]);
+    setShowCardSelection(false);
+    setReading(null);
+    setActiveTab("select");
   };
 
   const handleProceedToCardSelection = () => {
-    if (!selectedSpread) return;
     setShowCardSelection(true);
   };
 
   const handleCardSelect = (cardId: number) => {
     if (!selectedSpread) return;
-    
-    if (selectedCards.includes(cardId)) {
-      // Deselect card if already selected
-      setSelectedCards(selectedCards.filter(id => id !== cardId));
-    } else {
-      // Check if we can select more cards based on the spread
+
+    const newSelectedCards = [...selectedCards];
+    const index = newSelectedCards.indexOf(cardId);
+
+    if (index === -1) {
+      // Kart seçilmemişse, ekle (eğer limit aşılmıyorsa)
       if (selectedCards.length < tarotSpreads[selectedSpread].cardCount) {
-        setSelectedCards([...selectedCards, cardId]);
+        newSelectedCards.push(cardId);
       } else {
+        // Maximum kart sayısına ulaşıldı
         toast.info(`${tarotSpreads[selectedSpread].name} için maksimum ${tarotSpreads[selectedSpread].cardCount} kart seçebilirsiniz.`);
+        return;
       }
+    } else {
+      // Kart zaten seçilmişse, çıkar
+      newSelectedCards.splice(index, 1);
     }
+
+    setSelectedCards(newSelectedCards);
   };
 
   const handleGetReading = async () => {
-    if (!selectedSpread) return;
-    
-    // Check if user has selected the required number of cards
-    if (selectedCards.length !== tarotSpreads[selectedSpread].cardCount) {
-      toast.error(`Lütfen ${tarotSpreads[selectedSpread].cardCount} kart seçin.`);
-      return;
-    }
-
     try {
-      const creditUsed = await auth.useOneCredit('tarot', selectedSpread);
-      if (!creditUsed) {
+      if (!selectedSpread) {
+        toast.error("Lütfen bir fal tipi seçin");
         return;
       }
       
       setIsLoading(true);
-      // Include selected cards in the API call
+      
+      // Use credit based on spread type
+      const creditUsed = await auth.useOneCredit('tarot', selectedSpread);
+      if (!creditUsed) {
+        toast.error("Kredi kullanılamadı. Kredi bakiyenizi kontrol edin.");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get selected card names
       const selectedCardNames = selectedCards.map(id => 
         tarotCards.find(card => card.id === id)?.name || ""
       );
@@ -153,9 +162,12 @@ export default function TarotPage() {
       );
       
       setReading(result);
+      // Sonuç tab'ına geçiş yap
+      setActiveTab("result");
+      
     } catch (error) {
+      console.error('Error:', error);
       toast.error("Tarot okuması alınırken bir hata oluştu. Lütfen tekrar deneyin.");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -165,13 +177,22 @@ export default function TarotPage() {
     setQuestion(e.target.value);
   };
 
+  const resetTarot = () => {
+    setSelectedSpread(null);
+    setSelectedCards([]);
+    setShowCardSelection(false);
+    setReading(null);
+    setQuestion("");
+    setActiveTab("select");
+  };
+
   return (
-    <div className="container py-8 md:py-12">
-      <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
-        <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl">
+    <div className="container py-8 px-4 sm:px-6 space-y-6">
+      <div className="text-center space-y-2 max-w-3xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300">
           Tarot Falı
         </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground">
+        <p className="text-muted-foreground max-w-2xl mx-auto">
           Tarot kartları ile geleceğinizi keşfedin ve sorularınıza cevap bulun
         </p>
       </div>
@@ -180,7 +201,7 @@ export default function TarotPage() {
         title="Tarot Falı - Üyelere Özel"
         description="Tarot falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Tek kart ve üç kart falı 1 kredi, Kelt haçı falı 3 kredi kullanır. Kayıtlı kullanıcılara her ay 15 kredi verilir."
       >
-        <TarotContent 
+        <TarotContent
           selectedSpread={selectedSpread}
           question={question}
           reading={reading}
@@ -192,6 +213,9 @@ export default function TarotPage() {
           handleProceedToCardSelection={handleProceedToCardSelection}
           handleCardSelect={handleCardSelect}
           handleGetReading={handleGetReading}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          resetTarot={resetTarot}
         />
       </ProtectedFeature>
     </div>
@@ -209,7 +233,10 @@ function TarotContent({
   handleQuestionChange,
   handleProceedToCardSelection,
   handleCardSelect,
-  handleGetReading
+  handleGetReading,
+  activeTab,
+  setActiveTab,
+  resetTarot
 }: {
   selectedSpread: TarotSpread | null;
   question: string;
@@ -222,14 +249,24 @@ function TarotContent({
   handleProceedToCardSelection: () => void;
   handleCardSelect: (cardId: number) => void;
   handleGetReading: () => Promise<void>;
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  resetTarot: () => void;
 }) {
+  // Okuma sonucunda otomatik olarak sonuç tabına geçiş yap
+  useEffect(() => {
+    if (reading) {
+      setActiveTab("result");
+    }
+  }, [reading, setActiveTab]);
+
   return (
     <div className="mx-auto mt-8 max-w-[980px]">
-      <Tabs defaultValue="select" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="select">Fal Tipi Seçin</TabsTrigger>
-          <TabsTrigger value="reading" disabled={!reading}>
-            Tarot Okuması
+          <TabsTrigger value="result" disabled={!reading}>
+            Tarot Okumanız
           </TabsTrigger>
         </TabsList>
         <TabsContent value="select" className="mt-4">
@@ -361,7 +398,7 @@ function TarotContent({
             </>
           )}
         </TabsContent>
-        <TabsContent value="reading" className="mt-4">
+        <TabsContent value="result" className="mt-4">
           {reading && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -448,9 +485,7 @@ function TarotContent({
                   <CardFooter className="flex justify-center gap-2 py-6 mt-2 bg-gradient-to-b from-transparent to-purple-100/50 dark:to-purple-900/20">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        handleSpreadSelect(null as unknown as TarotSpread);
-                      }}
+                      onClick={resetTarot}
                       className="mr-2 bg-white dark:bg-black border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-all duration-300 shadow-sm"
                     >
                       <ArrowRight className="h-4 w-4 mr-2" />

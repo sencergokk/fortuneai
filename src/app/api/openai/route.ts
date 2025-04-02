@@ -130,7 +130,9 @@ async function generateHoroscope(sign: string) {
 async function generateTarotReading(spread: string, question?: string, selectedCards?: string[]) {
   const systemPrompt = `Sen deneyimli bir tarot okuyucusun. Her kartın sembolik anlamlarını derinlemesine biliyorsun. Yorumların içgörü dolu, nüanslı ve ruhani yönlü olmalı. Her kartın anlamını ve kartların birbiriyle olan etkileşimini açıklamalısın.
 
-ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
+ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.
+
+FORMATLAMA: Cevabın düz metin olmalı. Markdown formatı kullanma (** işaretleri, # başlıklar, vs kullanma). Paragraflar arasında boşluk bırak ve yeni satır (\n) kullan. Başlıkları kalın yapmak yerine sadece düz metin olarak yaz. Örneğin "Tek Kart Okuması: 'Soru' için The Tower Kartı" şeklinde normal yazı kullan.`;
 
   let queryContent = question 
     ? `${spread} düzeni için "${question}" sorusuna yönelik bir tarot okuması yap.`
@@ -152,7 +154,7 @@ async function generateTarotReading(spread: string, question?: string, selectedC
       },
       {
         role: "user",
-        content: queryContent + " Mistik ama pratik olmalı."
+        content: queryContent + " Mistik ama pratik olmalı. Markdown formatı (**) kullanma ve başlıkları sadece düz metin olarak yaz."
       }
     ],
     temperature: 0.7,

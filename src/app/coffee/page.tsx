@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodiacSigns, type ZodiacSign } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,10 +26,10 @@ export default function CoffeePage() {
   const [question, setQuestion] = useState("");
   const [selectedSign, setSelectedSign] = useState<ZodiacSign | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [reading, setReading] = useState<string | null>(null);
-  
-  // Get auth context at component level
+  const [isLoading, setIsLoading] = useState(false);
+  // Aktif tab state'i
+  const [activeTab, setActiveTab] = useState("input");
   const auth = useAuth();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,31 +52,29 @@ export default function CoffeePage() {
   };
 
   const handleGetReading = async () => {
-    if (!description.trim()) {
-      toast.error("Lütfen fincan içindeki şekilleri tanımlayın.");
-      return;
-    }
-    
-    setIsLoading(true);
-    
     try {
-      // Call useOneCredit directly from auth
+      setIsLoading(true);
+      
       const creditUsed = await auth.useOneCredit('coffee');
       if (!creditUsed) {
+        toast.error("Kredi kullanılamadı. Kredi bakiyenizi kontrol edin.");
         setIsLoading(false);
         return;
       }
       
       const result = await getCoffeeReading(
         description,
-        question.trim() || undefined,
-        selectedSign || undefined
+        question,
+        selectedSign ?? undefined
       );
       
       setReading(result);
+      // Reading tab'ına geçiş yap
+      setActiveTab("reading");
+      
     } catch (error) {
-      toast.error("Kahve falı alınırken bir hata oluştu. Lütfen tekrar deneyin.");
-      console.error(error);
+      console.error('Error:', error);
+      toast.error("Falınız alınırken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
     }
@@ -88,15 +86,23 @@ export default function CoffeePage() {
     setSelectedSign(null);
     setReading(null);
     setImagePreview(null);
+    setActiveTab("input");
   };
 
+  // Fal sonucu geldiğinde otomatik olarak reading tab'ına geçiş yap
+  useEffect(() => {
+    if (reading) {
+      setActiveTab("reading");
+    }
+  }, [reading]);
+
   return (
-    <div className="container py-8 md:py-12">
-      <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
-        <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl">
+    <div className="container py-8 px-4 sm:px-6 space-y-6">
+      <div className="text-center space-y-2 max-w-3xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600 dark:from-amber-200 dark:to-orange-400">
           Kahve Falı
         </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground">
+        <p className="text-muted-foreground max-w-2xl mx-auto">
           Türk kahvesi fincanınızdaki şekilleri anlatın, sizin için yorumlayalım
         </p>
       </div>
@@ -118,6 +124,8 @@ export default function CoffeePage() {
           handleGetReading={handleGetReading}
           setSelectedSign={setSelectedSign}
           resetForm={resetForm}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
       </ProtectedFeature>
     </div>
@@ -136,7 +144,9 @@ function CoffeeContent({
   handleImageChange,
   handleGetReading,
   setSelectedSign,
-  resetForm
+  resetForm,
+  activeTab,
+  setActiveTab
 }: {
   description: string;
   question: string;
@@ -150,10 +160,19 @@ function CoffeeContent({
   handleGetReading: () => void;
   setSelectedSign: (sign: ZodiacSign | null) => void;
   resetForm: () => void;
+  activeTab: string;
+  setActiveTab: (value: string) => void;
 }) {
+  // Fal sonucu geldiğinde otomatik olarak reading tab'ına geçiş yap
+  useEffect(() => {
+    if (reading) {
+      setActiveTab("reading");
+    }
+  }, [reading]);
+
   return (
     <div className="mx-auto mt-8 max-w-[980px]">
-      <Tabs defaultValue="input" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="input">Fincanınızı Tanımlayın</TabsTrigger>
           <TabsTrigger value="reading" disabled={!reading}>
