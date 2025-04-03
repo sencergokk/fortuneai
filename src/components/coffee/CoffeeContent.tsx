@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
+import { toast } from "sonner";
 
 // Helper functions (moved here or can be in a separate utils file)
 function extractSection(reading: string, ...keywords: string[]): string | null {
@@ -247,16 +248,29 @@ export default function CoffeeContent({
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
+    // 3 resim limitini kontrol et - mevcut resimlerle birlikte toplam 3'ü geçmemeli
+    const availableSlots = 3 - cupImages.length;
+    if (availableSlots <= 0) {
+      toast.error("En fazla 3 fincan fotoğrafı yükleyebilirsiniz.");
+      return;
+    }
+    
     const newImages: string[] = [];
-    const fileArray = Array.from(files);
+    // Sadece yüklenebilecek sayıda resmi alacağız
+    const filesToProcess = Array.from(files).slice(0, availableSlots);
+    
+    // Kullanıcı çok fazla resim seçtiyse uyarı göster
+    if (files.length > availableSlots) {
+      toast.warning(`Sadece ${availableSlots} resim daha yükleyebilirsiniz. İlk ${availableSlots} resim işlenecek.`);
+    }
     
     // Sadece resimleri işle ve base64'e dönüştür
-    fileArray.forEach(file => {
+    filesToProcess.forEach(file => {
       if (isValidImageFile(file)) {
         const reader = new FileReader();
         reader.onloadend = () => {
           newImages.push(reader.result as string);
-          if (newImages.length === fileArray.filter(isValidImageFile).length) {
+          if (newImages.length === filesToProcess.filter(isValidImageFile).length) {
             setCupImages(prev => [...prev, ...newImages]);
           }
         };
@@ -275,19 +289,19 @@ export default function CoffeeContent({
     resetForm();
   };
   
-  // Fal sonucu geldiğinde otomatik olarak reading tab'ına geçiş yap
+  // Değişiklik 1: Hem fal sonucu geldiğinde, hem de yükleme başladığında reading tab'ına geçiş yap
   useEffect(() => {
-    if (reading && activeTab !== "reading") {
+    if ((isLoading || reading) && activeTab !== "reading") {
       setActiveTab("reading");
     }
-  }, [reading, activeTab, setActiveTab]);
+  }, [reading, isLoading, activeTab, setActiveTab]);
 
   return (
     <div className="mx-auto mt-8 max-w-[980px]">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="input" disabled={isLoading}>Kahve Falınız</TabsTrigger>
-          <TabsTrigger value="reading" disabled={!reading || isLoading}>Yorumunuz</TabsTrigger>
+          <TabsTrigger value="reading" disabled={!reading && !isLoading}>Yorumunuz</TabsTrigger>
         </TabsList>
         <TabsContent value="input" className="p-0 pt-4">
           <Card>
@@ -303,7 +317,7 @@ export default function CoffeeContent({
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
                   <Camera className="h-4 w-4" />
-                  Fincan Fotoğrafları (3-4 adet)
+                  Fincan Fotoğrafları (En fazla 3 adet)
                 </Label>
                 
                 <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 mb-4">
@@ -344,7 +358,7 @@ export default function CoffeeContent({
                     ))}
                     
                     {/* Fotoğraf ekleme butonu */}
-                    {cupImages.length < 4 && (
+                    {cupImages.length < 3 && (
                       <div className="flex items-center justify-center border border-dashed border-border rounded-lg aspect-square">
                         <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
                           <ImageIcon className="h-8 w-8 text-muted-foreground mb-1" />
@@ -368,6 +382,7 @@ export default function CoffeeContent({
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Upload className="h-10 w-10 text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">Fincan fotoğraflarınızı buraya sürükleyin<br /> veya yüklemek için tıklayın</p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-2">En az 1, en fazla 3 fincan fotoğrafı yükleyebilirsiniz</p>
                       <Label 
                         htmlFor="cup-images" 
                         className="cursor-pointer mt-4 bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-4 rounded-md text-sm"
@@ -435,7 +450,7 @@ export default function CoffeeContent({
               </Button>
               
               <div className="flex items-center">
-                <p className="text-xs mr-3 text-muted-foreground">1 kredi kullanılacak</p>
+                <p className="text-xs mr-3 text-muted-foreground">3 kredi kullanılacak</p>
                 <Button 
                   onClick={handleGetReading}
                   disabled={
@@ -456,7 +471,37 @@ export default function CoffeeContent({
         
         {/* Fal yorumu tab'ı - mevcut kodlara dokunmuyoruz */}
         <TabsContent value="reading" className="p-0 pt-4">
-          {reading && (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="max-w-md text-center space-y-4">
+                <h3 className="text-lg font-medium text-amber-800 dark:text-amber-300">
+                  Fincanınızdaki şekiller analiz ediliyor...
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Fotoğraflarınızdaki fincan, tabak ve kahve izlerindeki sembolleri analiz ediyoruz. Bu işlem yaklaşık 15-20 saniye sürebilir.
+                </p>
+                <div className="pt-4 flex justify-center">
+                  <div className="inline-flex gap-1.5">
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 0.2 }}
+                      className="w-2 h-2 rounded-full bg-amber-400"
+                    />
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5, delay: 0.2, repeatDelay: 0.2 }}
+                      className="w-2 h-2 rounded-full bg-amber-400"
+                    />
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5, delay: 0.4, repeatDelay: 0.2 }}
+                      className="w-2 h-2 rounded-full bg-amber-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : reading ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -624,7 +669,7 @@ export default function CoffeeContent({
                 </motion.div>
               </Card>
             </motion.div>
-          )}
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

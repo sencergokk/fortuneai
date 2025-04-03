@@ -37,16 +37,16 @@ export default function CoffeePage() {
     try {
       setIsLoading(true);
       
-      const creditUsed = await auth.useOneCredit('coffee');
-      if (!creditUsed) {
-        toast.error("Kredi kullanılamadı. Kredi bakiyenizi kontrol edin.");
+      // En az 1 resim kontrolü
+      if (!cupImages || cupImages.length === 0) {
+        toast.error("Lütfen en az bir fincan fotoğrafı yükleyin.");
         setIsLoading(false);
         return;
       }
       
-      // Görsel analiz kullanıyoruz, eski metin tabanlı yöntem kaldırıldı
-      if (!cupImages || cupImages.length === 0) {
-        toast.error("Lütfen en az bir kahve fincanı fotoğrafı yükleyin.");
+      const creditUsed = await auth.useOneCredit('coffee', 3);
+      if (!creditUsed) {
+        toast.error("Kredi kullanılamadı. Kredi bakiyenizi kontrol edin.");
         setIsLoading(false);
         return;
       }
@@ -89,7 +89,7 @@ export default function CoffeePage() {
 
       <ProtectedFeature
         title="Kahve Falı - Üyelere Özel"
-        description="Kahve falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Her kahve falı 1 kredi kullanır ve kayıtlı kullanıcılara her ay 15 kredi verilir."
+        description="Kahve falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Her kahve falı 3 kredi kullanır ve kayıtlı kullanıcılara her ay 15 kredi verilir."
       >
         <CoffeeContent 
           question={question}

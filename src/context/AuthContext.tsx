@@ -16,7 +16,7 @@ interface AuthContextProps {
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   refreshCredits: () => Promise<void>;
-  useOneCredit: (readingType?: string, spreadType?: string) => Promise<boolean>;
+  useOneCredit: (readingType?: string, amountOrSpread?: number | string) => Promise<boolean>;
   redeemCoupon: (couponCode: string) => Promise<boolean>;
   lastCreditRefresh?: string;
   forceCreateCredits: (amount?: number) => Promise<void>;
@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function useOneCredit(readingType?: string, spreadType?: string): Promise<boolean> {
+  async function useOneCredit(readingType?: string, amountOrSpread?: number | string): Promise<boolean> {
     if (!user) return false;
     
     try {
@@ -267,22 +267,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await refreshUserCredits(user.id);
       
       // Kaç kredi düşüleceğini belirle
-      let creditAmount = 1; // Varsayılan değer
+      let creditAmountToUse = 1; // Varsayılan değer
       
-      // Eğer tarot falı ve kelt haçı ise 3 kredi düş
-      if (readingType === 'tarot' && spreadType === 'celtic-cross') {
-        creditAmount = 3;
+      // Eğer amountOrSpread bir number ise, doğrudan kullan
+      if (typeof amountOrSpread === 'number') {
+        creditAmountToUse = amountOrSpread;
+      }
+      // Eğer amountOrSpread bir string ve tarot spreadType ise özel durumları kontrol et
+      else if (typeof amountOrSpread === 'string' && readingType === 'tarot') {
+        if (amountOrSpread === 'celtic-cross') {
+          creditAmountToUse = 3;
+        }
       }
       
-      if (credits < creditAmount) {
-        toast.error(`Bu işlem için ${creditAmount} kredi gerekmektedir. Yeterli krediniz bulunmamaktadır!`);
+      if (credits < creditAmountToUse) {
+        toast.error(`Bu işlem için ${creditAmountToUse} kredi gerekmektedir. Yeterli krediniz bulunmamaktadır!`);
         return false;
       }
-
+      
       // Update credits in database first
       const { error } = await supabase
         .from("user_credits")
-        .update({ credits: credits - creditAmount })
+        .update({ credits: credits - creditAmountToUse })
         .eq("user_id", user.id);
 
       if (error) {
@@ -296,7 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("credit_usage").insert({
           user_id: user.id,
           usage_type: readingType || "fortune_reading",
-          usage_amount: creditAmount,
+          usage_amount: creditAmountToUse,
           usage_date: new Date().toISOString(),
         });
       } catch (error: unknown) {
@@ -305,7 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Update local state after successful database update
-      setCredits(credits - creditAmount);
+      setCredits(credits - creditAmountToUse);
       return true;
     } catch (error) {
       console.error("Error in useOneCredit:", error);
