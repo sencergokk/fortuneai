@@ -102,4 +102,31 @@ export async function getDreamInterpretation(dream: string): Promise<string> {
 
   const data = await response.json();
   return data.result;
+}
+
+// Görsel tabanlı kahve falı yorumu
+export async function getCoffeeReadingFromImages(
+  images: string[],
+  zodiacSign?: ZodiacSign
+): Promise<string> {
+  const response = await fetch('/api/openai', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type: 'coffee',
+      parameters: {
+        images,
+        zodiacSign,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get coffee reading from images');
+  }
+
+  const data = await response.json();
+  return data.result;
 } 

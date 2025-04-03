@@ -78,9 +78,8 @@ export async function POST(req: NextRequest) {
         response = await generateTarotReading(parameters.spread, parameters.question, parameters.selectedCards);
         break;
       case 'coffee':
-        response = await generateCoffeeReading(
-          parameters.description,
-          parameters.question,
+        response = await generateCoffeeReadingFromImages(
+          parameters.images,
           parameters.zodiacSign
         );
         break;
@@ -165,44 +164,82 @@ FORMATLAMA: Cevabın düz metin olmalı. Markdown formatı kullanma (** işaretl
   return completion.choices[0].message.content;
 }
 
-async function generateCoffeeReading(description: string, question?: string, zodiacSign?: string) {
-  const systemPrompt = `Sen deneyimli bir Türk kahve falı uzmanısın. Fincandaki figürleri, sembolleri ve şekilleri yorumlayarak kişiye özel fal bakarsın. Her sembolün geleneksel ve modern yorumlarını bilirsin.
-
-ÖNEMLİ: Fincan tanımında görülen figürleri doğrudan analiz et. Örneğin "fil" görüldüyse, bu sembolün anlamını (güç, dayanıklılık, bolluk, talih) açıkla.
-
-Yorumlarını şu bölümlere ayır:
-1. Genel Yorumunuz - Fincandaki genel görünümü ve öne çıkan sembollerin genel anlamını açıkla
-2. Aşk & İlişkiler - Aşk hayatı ve ilişkilerle ilgili sembolleri ve anlamlarını açıkla
-3. Kariyer & Başarı - İş ve kariyer ile ilgili sembolleri ve anlamlarını açıkla
-4. Para & Bolluk - Finansal durumla ilgili sembolleri ve anlamlarını açıkla
-5. Sağlık & Enerji - Sağlık ile ilgili sembolleri ve anlamlarını açıkla
-
-Her bir sembol için "Bu sembol ... anlamına gelir" şeklinde açıklamalar yap. Fincanda görülen her figürün anlamını mutlaka belirt.
-
-ÖNEMLİ: Kullanıcının sorduğu dilde yanıt vermelisin. Eğer soru Türkçe ise Türkçe, İngilizce ise İngilizce yanıt ver. Asla farklı bir dilde yanıt verme.`;
-
-  let content = "Türk kahve falı yorumu yapacaksın. ";
-  content += `Fincan hakkında şu bilgiler verildi: "${description}". `;
-  
-  if (question) {
-    content += `Kullanıcının sorusu: "${question}". `;
+// Fotoğraflardan kahve falı yorumu oluşturma
+async function generateCoffeeReadingFromImages(
+  images: string[],
+  zodiacSign?: string
+) {
+  if (!images || images.length === 0) {
+    throw new Error('No images provided for coffee reading');
   }
-  
-  if (zodiacSign) {
-    content += `Kullanıcının burcu: ${zodiacSign}. `;
-  }
-  
-  content += `Fincan tanımında belirtilen her figürü ve sembolü ayrı ayrı analiz et. Özellikle tanımda belirtilen şu sembolleri yorumla: ${extractKeySymbols(description)}. 
 
-Her bir sembol için geleneksel anlamını açıkla. Fincan tanımını ve (varsa) kullanıcının burcunu dikkate alarak kişiye özel yorumla. 
+  // Geliştirilmiş sistem mesajı
+  const systemPrompt = `Sen deneyimli bir Türk kahve falı uzmanısın. Sana gönderilen fincan fotoğraflarını analiz ederek kahve falı yorumu yapmalısın.
 
-Cevabını şu bölümlere ayır:
-- Genel Yorumunuz
-- Aşk & İlişkiler 
-- Kariyer & Başarı
-- Para & Bolluk
-- Sağlık & Enerji`;
+ÖNEMLİ: Kullanıcıdan herhangi bir fincan açıklaması veya içerik gelmeyecektir. Sadece fotoğrafları analiz ederek yorum yapmalısın. İlave bilgi isteme veya daha fazla açıklama bekleme.
 
+GÖREV: 
+- Görsellerde gördüğün fincanların her birini detaylı analiz et.
+- Fincanlardaki şekilleri, lekeleri ve desenleri yorumla.
+- Fincanın farklı bölgelerindeki sembolleri ayrı ayrı değerlendir: Tabanı, kenarları, ağzı ve tabağı.
+- Gördüğün her şekil ve sembolü yorumla, belirgin figürleri belirt.
+
+YORUMLA BÖLÜMLERİ:
+1. Genel Görünüm: Fincanda gördüğün ana sembolleri ve genel olarak ne ifade ettiğini detaylandır. Fincanın genel enerjisini tanımla.
+
+2. Aşk & İlişkiler: Romantik hayat, mevcut/potansiyel ilişkiler, aşk hayatındaki olası gelişmeler, aile ilişkileri.
+
+3. Kariyer & Başarı: İş hayatı, kariyer fırsatları, projeler, eğitim, mesleki gelişim.
+
+4. Para & Bolluk: Finansal durum, beklenen gelirler/giderler, yatırımlar, maddi fırsatlar.
+
+5. Sağlık & Enerji: Fiziksel/zihinsel sağlık, enerji seviyeleri, potansiyel sağlık uyarıları.
+
+6. Beklentiler & Gelecek: Yakın ve uzak gelecekte beklenen önemli olaylar, değişimler.
+
+Her bölümde, gördüğün sembolleri detaylandırarak açıkla ve anlamlarını bağlam içinde yorumla. Fincanın farklı bölgelerinde (iç, dış, tabak) gördüğün sembolleri zamansal olarak sırala. Mistik ama anlaşılır ol. Pozitif ve cesaretlendirici bir ton kullan, ancak görünen olumsuz işaretleri de nazikçe belirt. 
+
+ASLA 'Fincan hakkında bilgi verilmediği için yorum yapamıyorum' veya benzeri bir cevap verme. Fotoğrafları analiz ederek detaylı yorum yapman gerekiyor.`;
+
+  // Metin içeriği
+  const textContent = `Kahve fincanımın fotoğraflarını gönderiyorum. ${zodiacSign ? 'Burcum: ' + zodiacSign + '.' : ''} Lütfen fincanımdaki şekilleri tespit et ve Türk kahve falı geleneğine göre yorumla.`;
+
+  // İleti içeriğini OpenAI'nin API'sine uygun formatta hazırla
+  type ContentPartText = {
+    type: "text";
+    text: string;
+  };
+
+  type ContentPartImage = {
+    type: "image_url";
+    image_url: {
+      url: string;
+      detail: "high" | "low" | "auto";
+    };
+  };
+
+  type ContentPart = ContentPartText | ContentPartImage;
+
+  // İçerik dizisini oluştur
+  const contentParts: ContentPart[] = [
+    { 
+      type: "text", 
+      text: textContent 
+    }
+  ];
+
+  // Görselleri ekle
+  images.forEach(image => {
+    contentParts.push({
+      type: "image_url",
+      image_url: {
+        url: image,
+        detail: "high"
+      }
+    });
+  });
+
+  // OpenAI Vision API'sini çağır
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
@@ -212,30 +249,14 @@ Cevabını şu bölümlere ayır:
       },
       {
         role: "user",
-        content: content
+        content: contentParts
       }
     ],
+    max_tokens: 2000,
     temperature: 0.7,
   });
 
   return completion.choices[0].message.content;
-}
-
-// Fincan tanımından anahtar sembolleri çıkaran yardımcı fonksiyon
-function extractKeySymbols(description: string): string {
-  // Türkçe yaygın nesneler için regex pattern
-  const symbolPattern = /\b(fil|kuş|kalp|yol|ağaç|dağ|ev|yılan|balık|çiçek|yıldız|ay|güneş|göz|köpek|kedi|at|kuzu|aslan|kutu|gemi|uçak|araba|merdiven|anahtar|kapı|pencere|çanta|şemsiye|kitap|mektup|para|yüzük|saat)\b/gi;
-
-  // Tanımdaki sembolleri bul
-  const matches = description.match(symbolPattern);
-  
-  // Eşleşme yoksa veya boşsa, genel bir ifade döndür
-  if (!matches || matches.length === 0) {
-    return "fincandaki tüm şekilleri ve sembolleri";
-  }
-  
-  // Tekrar edenleri kaldır ve string olarak birleştir
-  return [...new Set(matches.map(match => match.toLowerCase()))].join(', ');
 }
 
 async function generateDreamInterpretation(dream: string) {

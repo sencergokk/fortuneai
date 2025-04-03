@@ -1,19 +1,18 @@
-import { useEffect } from "react";
+import { useEffect} from "react";
 import { zodiacSigns, type ZodiacSign } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { 
   Upload, Coffee, Sparkles, Clock, Heart, Star, ArrowRight, 
-  Coins,  Eye, CircleDot, Activity
+  Coins, Eye, CircleDot, Activity, X, Camera, ImageIcon, HelpCircle
 } from "lucide-react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { FortuneLoadingAnimation } from "@/components/fortune/FortuneLoadingAnimation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Image from "next/image";
 
 // Helper functions (moved here or can be in a separate utils file)
 function extractSection(reading: string, ...keywords: string[]): string | null {
@@ -201,16 +200,19 @@ function AnimatedReadingSection({
   );
 }
 
+// Dosya türünü kontrol eden yardımcı fonksiyon
+function isValidImageFile(file: File): boolean {
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/heic', 'image/heif'];
+  return validTypes.includes(file.type);
+}
 
 // Interface for CoffeeContent props
 interface CoffeeContentProps {
-  description: string;
   question: string;
   selectedSign: ZodiacSign | null;
   reading: string | null;
   isLoading: boolean;
   imagePreview: string | null;
-  handleDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleQuestionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleGetReading: () => void;
@@ -218,25 +220,61 @@ interface CoffeeContentProps {
   resetForm: () => void;
   activeTab: string;
   setActiveTab: (value: string) => void;
+  cupImages: string[];
+  setCupImages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 // Export the CoffeeContent component
 export default function CoffeeContent({
-  description,
   question,
   selectedSign,
   reading,
   isLoading,
-  imagePreview,
-  handleDescriptionChange,
   handleQuestionChange,
-  handleImageChange,
   handleGetReading,
   setSelectedSign,
   resetForm,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  cupImages,
+  setCupImages
 }: CoffeeContentProps) {
+  // Remove the local cupImages state since it's now passed from props
+  // const [cupImages, setCupImages] = useState<string[]>([]);
+  
+  // Yüklenen resim dosyalarını işleyecek fonksiyon
+  const handleCupImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const newImages: string[] = [];
+    const fileArray = Array.from(files);
+    
+    // Sadece resimleri işle ve base64'e dönüştür
+    fileArray.forEach(file => {
+      if (isValidImageFile(file)) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newImages.push(reader.result as string);
+          if (newImages.length === fileArray.filter(isValidImageFile).length) {
+            setCupImages(prev => [...prev, ...newImages]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+  
+  // Fotoğrafı kaldırma fonksiyonu
+  const removeImage = (index: number) => {
+    setCupImages(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // Reset fonksiyonunu güncelliyoruz
+  const handleReset = () => {
+    resetForm();
+  };
+  
   // Fal sonucu geldiğinde otomatik olarak reading tab'ına geçiş yap
   useEffect(() => {
     if (reading && activeTab !== "reading") {
@@ -248,115 +286,176 @@ export default function CoffeeContent({
     <div className="mx-auto mt-8 max-w-[980px]">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="input">Fincanınızı Tanımlayın</TabsTrigger>
-          <TabsTrigger value="reading" disabled={!reading}>
-            Kahve Falınız
-          </TabsTrigger>
+          <TabsTrigger value="input" disabled={isLoading}>Kahve Falınız</TabsTrigger>
+          <TabsTrigger value="reading" disabled={!reading || isLoading}>Yorumunuz</TabsTrigger>
         </TabsList>
-        <TabsContent value="input" className="mt-4">
-          {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="py-10"
-            >
-              <FortuneLoadingAnimation 
-                type="coffee" 
-                message="Fincanınızdaki şekiller yorumlanıyor ve kahve falınız hazırlanıyor..."
-              />
-            </motion.div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Fincanınızı Tanımlayın</CardTitle>
-                <CardDescription>
-                  Kahve fincanınızdaki şekilleri detaylı olarak anlatın veya fotoğraf yükleyin
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="image" className="text-base">Fincan Fotoğrafı (İsteğe Bağlı)</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="grid w-full gap-1.5">
-                        <Label 
-                          htmlFor="image" 
-                          className="cursor-pointer flex items-center justify-center border-2 border-dashed border-muted-foreground/25 p-4 h-32 rounded-md hover:bg-muted transition-colors"
-                        >
-                          {imagePreview ? (
-                            <div className="relative h-full w-full">
-                              <Image 
-                                src={imagePreview}
-                                alt="Coffee cup"
-                                className="object-contain"
-                                fill={true}
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                              <Upload className="h-8 w-8" />
-                              <span>Fotoğraf yüklemek için tıklayın</span>
-                            </div>
-                          )}
-                        </Label>
-                        <Input 
-                          id="image" 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={handleImageChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description" className="text-base">Fincan Tanımı</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Fincanınızda gördüğünüz şekilleri detaylı olarak tanımlayın. Örneğin: 'Fincanın sağ tarafında bir kuş, alt kısmında dağ gibi bir şekil, sol tarafta bir yol görüyorum...'"
-                      value={description}
-                      onChange={handleDescriptionChange}
-                      className="min-h-32"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="question" className="text-base">Sorunuz (İsteğe Bağlı)</Label>
-                    <Input
-                      id="question"
-                      placeholder="Kahve falınızda özellikle cevap arıyorsanız sorunuzu yazın"
-                      value={question}
-                      onChange={handleQuestionChange}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-base">Burcunuz (İsteğe Bağlı)</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                      {Object.entries(zodiacSigns).map(([key, sign]) => (
-                        <Button
-                          key={key}
+        <TabsContent value="input" className="p-0 pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Kahve Falınız</CardTitle>
+              <CardDescription>
+                Türk kahvesi fincanınızın fotoğraflarını yükleyin. En iyi yorumu alabilmek için fincanın farklı açılardan 
+                (iç kısmı, tabağa çevrilmiş hali ve tabağı) çekilmiş net fotoğraflarını yükleyin.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Görsel yükleme ve önizleme alanı */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Camera className="h-4 w-4" />
+                  Fincan Fotoğrafları (3-4 adet)
+                </Label>
+                
+                <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 mb-4">
+                  <HelpCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <AlertTitle className="text-amber-800 dark:text-amber-300 text-sm font-medium">Nasıl fotoğraf çekmelisiniz?</AlertTitle>
+                  <AlertDescription className="text-amber-700 dark:text-amber-400 text-xs">
+                    <ul className="list-disc list-inside space-y-1 mt-1">
+                      <li>Fincanın içini net görebileceğimiz bir fotoğraf</li>
+                      <li>Fincanı tabağa ters çevirip 40 sn bekledikten sonra kaldırılmış halini gösteren fotoğraf</li>
+                      <li>Tabaktaki kahve izlerinin fotoğrafı</li>
+                      <li>Varsa fincanın kulpu tarafındaki izlerin fotoğrafı</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+                
+                {/* Yüklenen görsellerin önizlemesi */}
+                {cupImages.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-3">
+                    {cupImages.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border border-border">
+                          <Image 
+                            src={image} 
+                            alt={`Fincan ${index + 1}`} 
+                            className="w-full h-full object-cover"
+                            width={200}
+                            height={200}
+                          />
+                        </div>
+                        <button 
                           type="button"
-                          variant={selectedSign === key ? "default" : "outline"}
-                          className="h-auto py-2 justify-start"
-                          onClick={() => setSelectedSign(key as ZodiacSign)}
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-90 hover:opacity-100"
                         >
-                          <span className="mr-2">{sign.emoji}</span>
-                          {sign.name}
-                        </Button>
-                      ))}
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Fotoğraf ekleme butonu */}
+                    {cupImages.length < 4 && (
+                      <div className="flex items-center justify-center border border-dashed border-border rounded-lg aspect-square">
+                        <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground">Fotoğraf Ekle</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCupImageUpload}
+                            className="hidden"
+                            multiple
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Fotoğraf yükleme alanı - fotoğraf yoksa */}
+                {cupImages.length === 0 && (
+                  <div className="border border-dashed border-border rounded-lg p-8 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Fincan fotoğraflarınızı buraya sürükleyin<br /> veya yüklemek için tıklayın</p>
+                      <Label 
+                        htmlFor="cup-images" 
+                        className="cursor-pointer mt-4 bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-4 rounded-md text-sm"
+                      >
+                        Fotoğraf Seç
+                      </Label>
+                      <input
+                        id="cup-images"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleCupImageUpload}
+                        className="hidden"
+                      />
                     </div>
                   </div>
+                )}
+              </div>
+              
+              {/* Diğer form alanları */}
+              <div className="space-y-2">
+                <Label htmlFor="question">Sorunuz (İsteğe bağlı)</Label>
+                <Input
+                  id="question"
+                  placeholder="Merak ettiğiniz bir konu veya soru"
+                  value={question}
+                  onChange={handleQuestionChange}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Coffee className="h-4 w-4" />
+                  Burcunuz (İsteğe bağlı)
+                </Label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {Object.keys(zodiacSigns).map((sign) => (
+                    <Button
+                      key={sign}
+                      type="button"
+                      variant={selectedSign === sign ? "default" : "outline"}
+                      size="sm"
+                      className={cn("w-full", 
+                        selectedSign === sign ? 
+                        "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" : 
+                        ""
+                      )}
+                      onClick={() => setSelectedSign(selectedSign === sign ? null : sign as ZodiacSign)}
+                      disabled={isLoading}
+                    >
+                      {zodiacSigns[sign as ZodiacSign].name}
+                    </Button>
+                  ))}
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button onClick={handleGetReading} disabled={isLoading || !description.trim()}>
-                  Falımı Göster
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={isLoading}
+              >
+                Temizle
+              </Button>
+              
+              <div className="flex items-center">
+                <p className="text-xs mr-3 text-muted-foreground">1 kredi kullanılacak</p>
+                <Button 
+                  onClick={handleGetReading}
+                  disabled={
+                    isLoading || cupImages.length === 0
+                  }
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  {isLoading ? (
+                    <>Yorumlanıyor</>
+                  ) : (
+                    <>Falımı Yorumla</>
+                  )}
                 </Button>
-              </CardFooter>
-            </Card>
-          )}
+              </div>
+            </CardFooter>
+          </Card>
         </TabsContent>
-        <TabsContent value="reading" className="mt-4">
+        
+        {/* Fal yorumu tab'ı - mevcut kodlara dokunmuyoruz */}
+        <TabsContent value="reading" className="p-0 pt-4">
           {reading && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
