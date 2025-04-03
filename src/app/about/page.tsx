@@ -84,7 +84,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-7 space-y-4">
             <p className="text-muted-foreground">
-              Falomi&apos;nin hikayesi, 2021 yılında kurucumuz Aylin Yıldız&apos;ın geleneksel kahve falı kültürünü dijital dünyaya taşıma vizyonuyla başladı. Teknoloji uzmanı bir aileden gelen Aylin, çocukluğunda büyükannesinin kahve falı baktığı anılarından ilham aldı.
+              Falomi&apos;nin hikayesi, 2025 yılında kurucumuz Sencer Gök&apos;ün geleneksel kahve falı kültürünü dijital dünyaya taşıma vizyonuyla başladı. Teknoloji uzmanı bir aileden gelen Sencer, çocukluğunda büyükannesinin kahve falı baktığı anılarından ilham aldı.
             </p>
             <p className="text-muted-foreground">
               İstanbul&apos;da bir apartman dairesinde iki yazılım mühendisi ve bir içerik uzmanıyla yola çıkan Falomi, ilk beta sürümünü 2021 sonbaharında yayınladı. Kullanıcılardan gelen olumlu geri bildirimler ve büyüyen taleple, ekibimiz hızla büyüdü.

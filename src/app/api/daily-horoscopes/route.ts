@@ -38,38 +38,38 @@ const zodiacSignsTR = [
   'yay', 'oğlak', 'kova', 'balık'
 ];
 
-// Önbellek değişkeni - sadece sunucu bellektedir, sunucu yeniden başlatıldığında sıfırlanır
+// Cache variable - exists only in server memory, resets when server restarts
 let horoscopeCache: CacheEntry | null = null;
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat (milisaniye cinsinden)
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours (in milliseconds) - reduced from 24 hours
 
-// Statik yanıt için headers
+// Ensure dynamic response
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600; // Her saat cache'i temizle (saniye cinsinden)
+export const revalidate = 0; // Disable cache completely for this endpoint
 
 /**
- * Endpoint - iki farklı mod:
- * 1. cron=true parametre ile çağrıldığında: Yeni burç yorumları oluşturur
- * 2. Normal istek: Veritabanındaki mevcut yorumları döndürür, ASLA yeni içerik oluşturmaz
+ * Endpoint - two different modes:
+ * 1. When called with cron=true parameter: Generates new horoscope content
+ * 2. Normal request: Returns existing horoscopes from database, NEVER generates new content
  */
 export async function GET(req: NextRequest) {
   try {
     console.log('GET /api/daily-horoscopes - Starting request');
     
-    // URL parametresi kontrol et - eğer ?cron=true ise, burç yorumlarını zorla güncelle
+    // Check URL parameter - if ?cron=true, force update horoscopes
     const isCronRequest = req.nextUrl.searchParams.get('cron') === 'true';
     
-    // Cache header'ları
+    // Cache headers
     const headers = {
-      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+      'Cache-Control': 'no-store, max-age=0'
     };
     
-    // Normal kullanıcı istekleri için önbellek kullan
+    // For normal user requests, use memory cache if available and fresh
     if (!isCronRequest && horoscopeCache && (Date.now() - horoscopeCache.timestamp) < CACHE_TTL) {
       console.log('Returning cached horoscopes from memory');
       return NextResponse.json({ horoscopes: horoscopeCache.data }, { headers });
     }
     
-    // Supabase bağlantısı kur
+    // Set up Supabase connection
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,18 +89,18 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    // Bugünün tarihi
+    // Current date
     const currentDate = new Date().toISOString().split('T')[0];
 
-    // CRON JOB İŞLEMİ - Sadece cron=true parametresi ile çağrıldığında
+    // CRON JOB PROCESSING - Only when called with cron=true parameter
     if (isCronRequest) {
       console.log('Cron job request detected - generating new horoscopes');
       
       try {
-        // Tüm burçlar için yeni yorumlar oluştur
+        // Generate new horoscopes for all signs
         const newHoroscopes = await generateAllDailyHoroscopes();
         
-        // Toplu güncelleme için promises dizisi
+        // Array of promises for bulk update
         const updatePromises = newHoroscopes.map(horoscope => 
           supabase
             .from('daily_horoscopes')
@@ -114,25 +114,35 @@ export async function GET(req: NextRequest) {
               },
               { 
                 onConflict: 'sign',
-                ignoreDuplicates: false
+                ignoreDuplicates: false  // Always update existing entries
               }
             )
         );
         
-        // Tüm güncellemeleri paralel olarak çalıştır
+        // Execute all updates in parallel
         const results = await Promise.allSettled(updatePromises);
         
-        // Hataları kontrol et
+        // Check for errors
+        let hasErrors = false;
         results.forEach((result, index) => {
           if (result.status === 'rejected') {
+            hasErrors = true;
             console.error(`Error updating horoscope for ${newHoroscopes[index].sign}:`, result.reason);
           }
         });
         
-        // Önbelleği temizle
+        // Clear cache to force fresh fetch next time
         horoscopeCache = null;
         
         console.log('Successfully generated and updated horoscopes via cron job');
+        
+        if (hasErrors) {
+          return NextResponse.json({ 
+            success: true, 
+            warning: 'Some horoscopes could not be updated',
+            updated: currentDate
+          }, { status: 207 });
+        }
         
         return NextResponse.json({ 
           success: true, 
@@ -148,7 +158,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // VERİTABANINDAN MEVCUT YORUMLARI AL
+    // GET EXISTING HOROSCOPES FROM DATABASE
     console.log('Querying Supabase for daily horoscopes');
     const { data: horoscopes, error } = await supabase
       .from('daily_horoscopes')
@@ -163,12 +173,12 @@ export async function GET(req: NextRequest) {
       );
     }
     
-    // Eğer veritabanında kayıt bulamazsak (ilk kurulum), yeni içerik oluştur
+    // If no records found (first-time setup), generate new content
     if (!horoscopes || horoscopes.length < 12) {
       console.log('First time setup: No horoscopes found in database, generating initial set');
       const initialHoroscopes = await generateAllDailyHoroscopes();
       
-      // Veritabanına kaydet
+      // Save to database
       for (const horoscope of initialHoroscopes) {
         await supabase
           .from('daily_horoscopes')
@@ -187,7 +197,7 @@ export async function GET(req: NextRequest) {
           );
       }
       
-      // Önbelleğe kaydet
+      // Save to cache
       horoscopeCache = {
         timestamp: Date.now(),
         data: initialHoroscopes
@@ -196,7 +206,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ horoscopes: initialHoroscopes }, { headers });
     }
     
-    // Veritabanında burç yorumları bulundu, bunları önbelleğe al ve döndür
+    // Check if horoscopes need updating based on date
+    const needsUpdate = horoscopes.some(horoscope => {
+      // If date is missing or different from current date, update is needed
+      return !horoscope.date || horoscope.date !== currentDate;
+    });
+    
+    if (needsUpdate && !isCronRequest) {
+      console.log('Horoscopes are outdated, triggering async update');
+      // Make a non-blocking call to the cron endpoint
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://fortuneai.vercel.app'}/api/daily-horoscopes?cron=true`, {
+        method: 'GET',
+        headers: { 'x-internal-trigger': 'true' }
+      }).catch(err => {
+        console.error('Failed to trigger horoscope update:', err);
+      });
+    }
+    
+    // Found horoscope records in database, cache them and return
     horoscopeCache = {
       timestamp: Date.now(),
       data: horoscopes
@@ -212,12 +239,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Tüm burçlar için günlük yorumları oluştur
+// Generate daily horoscopes for all zodiac signs
 async function generateAllDailyHoroscopes() {
   try {
     console.log('Generating horoscopes for all zodiac signs in a single API call');
     
-    // API anahtarı kontrol - debugging için
+    // API key check - debugging purposes
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is missing or empty');
       throw new Error('Missing OpenAI API key');
@@ -225,7 +252,7 @@ async function generateAllDailyHoroscopes() {
       console.log('OpenAI API key is configured');
     }
     
-    // Tüm burçları tek bir sistem promptu ile oluştur
+    // Generate horoscopes for all signs using a single system prompt
     const systemPrompt = `Sen deneyimli ve profesyonel bir astrologsun. Günlük burç yorumları yapıyorsun. 
 Yorumların mistik, içgörü dolu ve kişiselleştirilmiş olmalı. Aynı zamanda pozitif, motive edici ve gerçekçi olmalı. Yorumlarını gerçekten iyi analiz ederek hazırla.
 
@@ -247,7 +274,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
   ...
 }`;
 
-    // API çağrısı
+    // API call
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -264,7 +291,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
       temperature: 0.7,
     });
 
-    // API sonuçlarını işle
+    // Process API results
     const responseContent = completion.choices[0].message.content;
     console.log('Received API response, processing JSON');
     
@@ -281,14 +308,14 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
       throw new Error('Invalid JSON response from OpenAI API');
     }
     
-    // JSON verisini işleyerek tüm burçları ekle
+    // Process JSON data and add all horoscopes
     const horoscopes = [];
     
     for (let i = 0; i < zodiacSigns.length; i++) {
       const sign = zodiacSigns[i];
       const signTR = zodiacSignsTR[i];
       
-      // Burç yorumunu al
+      // Get horoscope content
       const content = horoscopeData[sign];
       
       if (content) {
@@ -308,7 +335,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
   } catch (error) {
     console.error('Error generating horoscopes:', error);
     
-    // Hata durumunda, burçları tek tek oluşturarak geri dönelim
+    // Fallback to individual horoscope generation if error occurs
     console.log('Falling back to individual horoscope generation');
     
     const horoscopes = [];
@@ -317,7 +344,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
       const signTR = zodiacSignsTR[i];
       
       try {
-        // Her burç için ayrı bir istek yap
+        // Make separate API call for each sign
         const horoscope = await generateHoroscope(sign);
         
         horoscopes.push({
@@ -327,7 +354,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
         });
       } catch (innerError) {
         console.error(`Error generating horoscope for ${sign}:`, innerError);
-        // Hata durumunda varsayılan bir mesaj koy
+        // Default message if error occurs
         horoscopes.push({
           sign: sign,
           sign_tr: signTR,
@@ -340,7 +367,7 @@ Cevabını JSON formatında yapılandır, böylece kolayca parse edilebilir olsu
   }
 }
 
-// Tek bir burç için yorum oluştur (OpenAI API kullanarak)
+// Generate horoscope for a single sign (using OpenAI API)
 async function generateHoroscope(sign: string) {
   const systemPrompt = `Sen deneyimli ve profesyonel bir astrologsun. Günlük burç yorumları yapıyorsun. 
 Yorumların mistik, içgörü dolu ve kişiselleştirilmiş olmalı. Aynı zamanda pozitif, motive edici ve gerçekçi olmalı. Yorumlarını gerçekten iyi analiz ederek hazırla.
