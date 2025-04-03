@@ -17,11 +17,11 @@ const creditPackages = [
   {
     id: "starter",
     name: "Starter",
-    credits: 50,
-    price: 19.99,
-    originalPrice: 24.99,
+    credits: 25,
+    price: 29.99,
+    originalPrice: 39.99,
     features: [
-      "50 Kredi",
+      "25 Kredi",
       "Tüm Fal Türleri",
       "7 Gün Geçerlilik",
       "Öncelikli Destek",
@@ -34,11 +34,11 @@ const creditPackages = [
   {
     id: "popular",
     name: "Popular",
-    credits: 150,
-    price: 44.99,
-    originalPrice: 59.99,
+    credits: 80,
+    price: 59.99,
+    originalPrice: 79.99,
     features: [
-      "150 Kredi",
+      "80 Kredi",
       "Tüm Fal Türleri",
       "30 Gün Geçerlilik",
       "Öncelikli Destek",
@@ -53,11 +53,11 @@ const creditPackages = [
   {
     id: "premium",
     name: "Premium",
-    credits: 400,
-    price: 89.99,
-    originalPrice: 149.99,
+    credits: 200,
+    price: 119.99,
+    originalPrice: 199.99,
     features: [
-      "400 Kredi",
+      "200 Kredi",
       "Tüm Fal Türleri",
       "90 Gün Geçerlilik",
       "Özel Fal Seçenekleri",

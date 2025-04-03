@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Create user credits function
-  const createUserCredits = useCallback(async (userId: string, initialAmount: number = 15) => {
+  const createUserCredits = useCallback(async (userId: string, initialAmount: number = 5) => {
     try {
       const now = new Date().toISOString();
       
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // E-posta doğrulama gerekmiyorsa veya zaten doğrulanmışsa
         await createUserCredits(data.user.id);
-        toast.success("Kaydınız başarıyla oluşturuldu! 15 kredi hesabınıza eklendi.");
+        toast.success("Kaydınız başarıyla oluşturuldu! 5 kredi hesabınıza eklendi.");
         
         // Auto sign in after sign up (only if no email confirmation needed)
         await signIn(email, password);
@@ -196,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Force create user credits (for fixing issues or admin use)
-  async function forceCreateCredits(amount: number = 15) {
+  async function forceCreateCredits(amount: number = 5) {
     if (!user) {
       toast.error("Bu işlem için giriş yapmalısınız.");
       return;

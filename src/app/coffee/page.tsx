@@ -89,7 +89,7 @@ export default function CoffeePage() {
 
       <ProtectedFeature
         title="Kahve Falı - Üyelere Özel"
-        description="Kahve falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Her kahve falı 3 kredi kullanır ve kayıtlı kullanıcılara her ay 15 kredi verilir."
+        description="Kahve falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Her kahve falı 3 kredi kullanır ve kayıtlı kullanıcılara her ay 5 kredi verilir."
       >
         <CoffeeContent 
           question={question}

@@ -118,7 +118,7 @@ export default function TarotPage() {
 
       <ProtectedFeature
         title="Tarot Falı - Üyelere Özel"
-        description="Tarot falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Tek kart ve üç kart falı 1 kredi, Kelt haçı falı 3 kredi kullanır. Kayıtlı kullanıcılara her ay 15 kredi verilir."
+        description="Tarot falı özelliğini kullanmak için giriş yapmanız gerekmektedir. Tek kart ve üç kart falı 1 kredi, Kelt haçı falı 3 kredi kullanır. Kayıtlı kullanıcılara her ay 5 kredi verilir."
       >
         <TarotContent
           selectedSpread={selectedSpread}

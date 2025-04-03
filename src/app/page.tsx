@@ -237,7 +237,7 @@ export default function Home() {
               {
                 icon: <CreditCard className="h-6 w-6 text-white" />,
                 title: "Aylık Ücretsiz Krediler",
-                description: "Üye olun ve her ay hesabınıza otomatik yüklenen 15 ücretsiz kredi ile falınıza bakın.",
+                description: "Üye olun ve her ay hesabınıza otomatik yüklenen 5 ücretsiz kredi ile falınıza bakın.",
                 color: featureColors[1],
                 emoji: "💎"
               },
@@ -385,7 +385,7 @@ export default function Home() {
             <div className="relative z-10 flex flex-col items-center gap-6 text-center">
               <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm px-4 py-2 text-sm font-medium border border-pink-200/50 dark:border-pink-900/30">
                 <Wand className="h-4 w-4 text-fuchsia-500 dark:text-fuchsia-400" />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-violet-600">Hemen üye olun, 15 kredi hediye!</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-violet-600">Hemen üye olun, 5 kredi hediye!</span>
               </div>
               
               <h2 className="text-3xl md:text-4xl font-bold leading-tight tracking-tighter">
@@ -412,7 +412,7 @@ export default function Home() {
               
               <div className="flex flex-wrap justify-center gap-4 mt-6">
                 {[
-                  { icon: <Zap className="h-5 w-5 text-amber-500" />, text: "15 ücretsiz kredi" },
+                  { icon: <Zap className="h-5 w-5 text-amber-500" />, text: "5 ücretsiz kredi" },
                   { icon: <ShieldCheck className="h-5 w-5 text-teal-500" />, text: "Güvenli ve gizli" },
                   { icon: <Star className="h-5 w-5 text-pink-500" />, text: "Kişiye özel yorumlar" },
                 ].map((item, index) => (

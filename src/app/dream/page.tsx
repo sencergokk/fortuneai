@@ -70,7 +70,7 @@ export default function DreamPage() {
 
       <ProtectedFeature
         title="Rüya Yorumu - Üyelere Özel"
-        description="Rüya yorumu özelliğini kullanmak için giriş yapmanız gerekmektedir. Her rüya yorumu 1 kredi kullanır ve kayıtlı kullanıcılara her ay 15 kredi verilir."
+        description="Rüya yorumu özelliğini kullanmak için giriş yapmanız gerekmektedir. Her rüya yorumu 1 kredi kullanır ve kayıtlı kullanıcılara her ay 5 kredi verilir."
       >
         <DreamContent
           dreamDescription={dreamDescription}

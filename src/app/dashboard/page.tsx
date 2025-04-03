@@ -148,7 +148,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Bir Sonraki Kredi Yenilemesi</p>
                     <p className="text-sm">{nextRefreshDate}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Her ay otomatik olarak 15 kredi yüklenir</p>
+                    <p className="text-xs text-muted-foreground mt-1">Her ay otomatik olarak 5 kredi yüklenir</p>
                   </div>
                 )}
               </div>

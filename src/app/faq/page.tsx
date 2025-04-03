@@ -60,7 +60,7 @@ export default function FAQPage() {
     },
     {
       question: "Bir fal için kaç kredi harcanır?",
-      answer: "Fallar türüne ve detay seviyesine göre farklı kredi miktarları gerektirir. Kahve falı genellikle 10 kredi, tarot falı seçtiğiniz kart sayısına göre 5-15 kredi ve rüya yorumları 8 kredi gerektirir. Her falın yanında gereken kredi miktarı belirtilmektedir.",
+      answer: "Fallar türüne ve detay seviyesine göre farklı kredi miktarları gerektirir. Kahve falı 3 kredi, tarot falı seçtiğiniz kart sayısına göre 1-3 kredi ve rüya yorumları 1 kredi gerektirir. Her falın yanında gereken kredi miktarı belirtilmektedir.",
       category: "fortune",
     },
     {

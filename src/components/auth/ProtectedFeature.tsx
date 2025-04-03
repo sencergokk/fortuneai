@@ -94,7 +94,7 @@ export function ProtectedFeature({
         <CardContent>
           <p className="text-muted-foreground">
             Bu özelliği kullanmak için yeterli krediniz bulunmamaktadır. 
-            Her ay hesabınıza otomatik olarak 15 kredi yüklenmektedir.
+            Her ay hesabınıza otomatik olarak 5 kredi yüklenmektedir.
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">
