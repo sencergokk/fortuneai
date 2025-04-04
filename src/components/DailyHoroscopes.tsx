@@ -85,18 +85,22 @@ interface HoroscopeApiResponse {
 export default function DailyHoroscopes() {
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
-  // SWR ile veri çekme - performans için önbellek ve yeniden doğrulama özelliği
+  // SWR ile veri çekme - sadece günlük güncelleme ve sayfayı yeniden yükleme durumunda
   const { data, error, isLoading, mutate } = useSWR<HoroscopeApiResponse>('/api/daily-horoscopes', fetcher, {
-    revalidateOnFocus: false,
-    revalidateIfStale: false,
-    dedupingInterval: 3600000, // 1 saat
+    revalidateOnFocus: false, // Sayfa odağı değiştiğinde yeniden yüklemeyi kapat
+    revalidateOnMount: true,   // Bileşen yüklendiğinde bir kez yükle
+    revalidateIfStale: false,  // Önbellekteki verileri sürekli yenileme
+    dedupingInterval: 3600000, // 1 saat içinde tekrar etmeyi engelle
+    refreshInterval: 0,        // Otomatik yenileme yapma, gün değişince backend yenileyecek
     onSuccess: (data: HoroscopeApiResponse) => {
       if (data?.horoscopes?.[0]?.updated_at) {
         const updateDate = new Date(data.horoscopes[0].updated_at);
         setLastUpdated(updateDate.toLocaleDateString('tr-TR', {
           day: 'numeric',
           month: 'long',
-          year: 'numeric'
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
         }));
       }
     }

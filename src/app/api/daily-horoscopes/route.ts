@@ -40,7 +40,7 @@ const zodiacSignsTR = [
 
 // Cache variable - exists only in server memory, resets when server restarts
 let horoscopeCache: CacheEntry | null = null;
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours (in milliseconds) - reduced from 24 hours
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours cache - less than a day to ensure refresh
 
 // Ensure dynamic response
 export const dynamic = 'force-dynamic';
@@ -49,7 +49,7 @@ export const revalidate = 0; // Disable cache completely for this endpoint
 /**
  * Endpoint - two different modes:
  * 1. When called with cron=true parameter: Generates new horoscope content
- * 2. Normal request: Returns existing horoscopes from database, NEVER generates new content
+ * 2. Normal request: Returns existing horoscopes from database, checks if update needed
  */
 export async function GET(req: NextRequest) {
   try {
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       'Cache-Control': 'no-store, max-age=0'
     };
     
-    // For normal user requests, use memory cache if available and fresh
+    // Use memory cache if available and fresh - restores on server restart
     if (!isCronRequest && horoscopeCache && (Date.now() - horoscopeCache.timestamp) < CACHE_TTL) {
       console.log('Returning cached horoscopes from memory');
       return NextResponse.json({ horoscopes: horoscopeCache.data }, { headers });
@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
     });
     
     if (needsUpdate && !isCronRequest) {
-      console.log('Horoscopes are outdated, triggering async update');
+      console.log('Horoscopes are outdated (different date), triggering async update');
       // Make a non-blocking call to the cron endpoint
       fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://fortuneai.vercel.app'}/api/daily-horoscopes?cron=true`, {
         method: 'GET',
